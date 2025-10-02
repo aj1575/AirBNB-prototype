@@ -31,7 +31,7 @@ app.get('/', (req, res) => {
 });
 
 // Routes (will be added by Yuktaa and Anurag separately)
-// app.use('/api/traveler', require('./routes/traveler/travelerRoutes'));  // Yuktaa will create
+app.use('/api/traveler', require('./routes/traveler/travelerRoutes'));  // Yuktaa will create
 // app.use('/api/owner', require('./routes/owner/ownerRoutes'));           // Anurag will create
 
 // Error handling middleware
