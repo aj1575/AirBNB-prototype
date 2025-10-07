@@ -1,36 +1,39 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
 
-// Traveler pages (you'll create these)
-import TravelerSignup from './pages/traveler/Signup';
-import TravelerLogin from './pages/traveler/Login';
-import TravelerDashboard from './pages/traveler/Dashboard';
-import TravelerProfile from './pages/traveler/Profile';
+// Owner Pages
+import OwnerSignup from './pages/owner/Signup';
+import OwnerLogin from './pages/owner/Login';
+import OwnerDashboard from './pages/owner/Dashboard';
+import OwnerProfile from './pages/owner/Profile';
+import AddEditProperty from './pages/owner/AddProperty';
+import BookingRequests from './pages/owner/BookingRequests';
 
-// Landing page
-import Home from './pages/Home';
+// Shared Components
+import Navbar from './components/shared/Navbar';
 
 function App() {
-  return (
-    <Router>
-      <div className="App">
-        <Routes>
-          {/* Home */}
-          <Route path="/" element={<Home />} />
-          
-          {/* Traveler Routes */}
-          <Route path="/traveler/signup" element={<TravelerSignup />} />
-          <Route path="/traveler/login" element={<TravelerLogin />} />
-          <Route path="/traveler/dashboard" element={<TravelerDashboard />} />
-          <Route path="/traveler/profile" element={<TravelerProfile />} />
-          
-          {/* Default redirect */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </div>
-    </Router>
-  );
+    return (
+        <Router>
+            <Navbar />
+            <Routes>
+                {/* Home */}
+                <Route path="/" element={<Navigate to="/owner/login" />} />
+
+                {/* Owner Routes */}
+                <Route path="/owner/signup" element={<OwnerSignup />} />
+                <Route path="/owner/login" element={<OwnerLogin />} />
+                <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+                <Route path="/owner/profile" element={<OwnerProfile />} />
+                <Route path="/owner/properties/new" element={<AddEditProperty />} />
+                <Route path="/owner/properties/edit/:id" element={<AddEditProperty />} />
+                <Route path="/owner/bookings" element={<BookingRequests />} />
+
+                {/* Traveler Routes - Yuktaa will add these */}
+                {/* <Route path="/traveler/login" element={<TravelerLogin />} /> */}
+            </Routes>
+        </Router>
+    );
 }
 
 export default App;

@@ -1,27 +1,35 @@
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(cors({ 
-    origin: 'http://localhost:3000', 
-    credentials: true 
+// ✅ CORS Configuration - MUST BE BEFORE OTHER MIDDLEWARE
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session middleware
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Session configuration
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || 'cmpe273_airbnb_secret_key_2024',
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: false, // set to true if using https
+        secure: false,
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        maxAge: 24 * 60 * 60 * 1000
     }
 }));
 
@@ -30,11 +38,11 @@ app.get('/', (req, res) => {
     res.json({ message: 'Airbnb API is running!' });
 });
 
-// Routes (will be added by Yuktaa and Anurag separately)
-// app.use('/api/traveler', require('./routes/traveler/travelerRoutes'));  // Yuktaa will create
-// app.use('/api/owner', require('./routes/owner/ownerRoutes'));           // Anurag will create
+// Routes
+app.use('/api/owner', require('./routes/owner/ownerRoutes'));
+// app.use('/api/traveler', require('./routes/traveler/travelerRoutes'));
 
-// Error handling middleware
+// Error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ 
