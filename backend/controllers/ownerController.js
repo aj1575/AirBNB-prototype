@@ -627,3 +627,148 @@ module.exports = {
     // Dashboard
     getDashboardStats
 };
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configure multer for image upload
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '../uploads/properties');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type. Only JPEG, PNG and WebP allowed.'), false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
+
+// Upload property images
+const uploadPropertyImages = async (req, res) => {
+    try {
+        const { propertyId } = req.params;
+        const ownerId = req.session.userId;
+
+        // Verify ownership
+        const [property] = await pool.execute(
+            'SELECT id, photos FROM properties WHERE id = ? AND owner_id = ?',
+            [propertyId, ownerId]
+        );
+
+        if (property.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Property not found or unauthorized' 
+            });
+        }
+
+        // Get uploaded files
+        const files = req.files;
+        if (!files || files.length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'No images uploaded' 
+            });
+        }
+
+        // Create URLs for uploaded images
+        const imageUrls = files.map(file => `/uploads/properties/${file.filename}`);
+
+        // Get existing photos
+        const existingPhotos = property[0].photos ? property[0].photos.split(',') : [];
+        const allPhotos = [...existingPhotos, ...imageUrls];
+
+        // Update database
+        await pool.execute(
+            'UPDATE properties SET photos = ? WHERE id = ?',
+            [allPhotos.join(','), propertyId]
+        );
+
+        res.json({
+            success: true,
+            message: 'Images uploaded successfully',
+            photos: allPhotos
+        });
+    } catch (error) {
+        console.error('Upload images error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to upload images' 
+        });
+    }
+};
+
+// Delete property image
+const deletePropertyImage = async (req, res) => {
+    try {
+        const { propertyId } = req.params;
+        const { imageUrl } = req.body;
+        const ownerId = req.session.userId;
+
+        // Verify ownership
+        const [property] = await pool.execute(
+            'SELECT id, photos FROM properties WHERE id = ? AND owner_id = ?',
+            [propertyId, ownerId]
+        );
+
+        if (property.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Property not found or unauthorized' 
+            });
+        }
+
+        // Remove image from database
+        const photos = property[0].photos ? property[0].photos.split(',') : [];
+        const updatedPhotos = photos.filter(photo => photo !== imageUrl);
+
+        await pool.execute(
+            'UPDATE properties SET photos = ? WHERE id = ?',
+            [updatedPhotos.join(','), propertyId]
+        );
+
+        // Delete physical file
+        const filePath = path.join(__dirname, '..', imageUrl);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        res.json({
+            success: true,
+            message: 'Image deleted successfully',
+            photos: updatedPhotos
+        });
+    } catch (error) {
+        console.error('Delete image error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to delete image' 
+        });
+    }
+};
+
+// Export upload middleware and functions
+module.exports = {
+    // ... previous exports
+    upload,
+    uploadPropertyImages,
+    deletePropertyImage
+};

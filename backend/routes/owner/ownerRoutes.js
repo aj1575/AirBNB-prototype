@@ -24,5 +24,30 @@ router.delete('/properties/:id', isAuthenticated, isOwner, ownerController.delet
 router.get('/bookings', isAuthenticated, isOwner, ownerController.getBookingRequests);
 router.put('/bookings/:id/accept', isAuthenticated, isOwner, ownerController.acceptBooking);
 router.put('/bookings/:id/cancel', isAuthenticated, isOwner, ownerController.cancelBooking);
+// Dashboard
+router.get('/dashboard/stats', isAuthenticated, isOwner, ownerController.getDashboardStats);
+module.exports = router;
+const express = require('express');
+
+const ownerController = require('../../controllers/ownerController');
+const { isAuthenticated, isOwner } = require('../../middleware/auth');
+
+// ... existing routes ...
+
+// Image Upload
+router.post(
+    '/properties/:propertyId/images',
+    isAuthenticated,
+    isOwner,
+    ownerController.upload.array('images', 10), // Max 10 images
+    ownerController.uploadPropertyImages
+);
+
+router.delete(
+    '/properties/:propertyId/images',
+    isAuthenticated,
+    isOwner,
+    ownerController.deletePropertyImage
+);
 
 module.exports = router;
