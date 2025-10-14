@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
+import PropertyDetails from './pages/traveler/PropertyDetails';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 // Shared Components
@@ -34,6 +35,7 @@ function App() {
                 <Route path="/traveler/dashboard" element={<TravelerDashboard />} />
                 <Route path="/traveler/profile" element={<TravelerProfile />} />
                 <Route path="/traveler/search" element={<PropertySearch />} />
+                <Route path="/traveler/property/:id" element={<PropertyDetails />} />
 
                 {/* Owner Routes */}
                 <Route path="/owner/signup" element={<OwnerSignup />} />

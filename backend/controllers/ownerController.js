@@ -1,5 +1,39 @@
 const pool = require('../models/db');
 const bcrypt = require('bcrypt');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// ========== MULTER CONFIG ==========
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '../uploads/properties');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type. Only JPEG, PNG and WebP allowed.'), false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 }
+});
 
 // ========== AUTHENTICATION ==========
 
@@ -375,6 +409,101 @@ const deleteProperty = async (req, res) => {
     }
 };
 
+// ========== IMAGE UPLOAD ==========
+
+const uploadPropertyImages = async (req, res) => {
+    try {
+        const { propertyId } = req.params;
+        const ownerId = req.session.userId;
+
+        const [property] = await pool.execute(
+            'SELECT id, photos FROM properties WHERE id = ? AND owner_id = ?',
+            [propertyId, ownerId]
+        );
+
+        if (property.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Property not found or unauthorized' 
+            });
+        }
+
+        const files = req.files;
+        if (!files || files.length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'No images uploaded' 
+            });
+        }
+
+        const imageUrls = files.map(file => `/uploads/properties/${file.filename}`);
+        const existingPhotos = property[0].photos ? property[0].photos.split(',') : [];
+        const allPhotos = [...existingPhotos, ...imageUrls];
+
+        await pool.execute(
+            'UPDATE properties SET photos = ? WHERE id = ?',
+            [allPhotos.join(','), propertyId]
+        );
+
+        res.json({
+            success: true,
+            message: 'Images uploaded successfully',
+            photos: allPhotos
+        });
+    } catch (error) {
+        console.error('Upload images error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to upload images' 
+        });
+    }
+};
+
+const deletePropertyImage = async (req, res) => {
+    try {
+        const { propertyId } = req.params;
+        const { imageUrl } = req.body;
+        const ownerId = req.session.userId;
+
+        const [property] = await pool.execute(
+            'SELECT id, photos FROM properties WHERE id = ? AND owner_id = ?',
+            [propertyId, ownerId]
+        );
+
+        if (property.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Property not found or unauthorized' 
+            });
+        }
+
+        const photos = property[0].photos ? property[0].photos.split(',') : [];
+        const updatedPhotos = photos.filter(photo => photo !== imageUrl);
+
+        await pool.execute(
+            'UPDATE properties SET photos = ? WHERE id = ?',
+            [updatedPhotos.join(','), propertyId]
+        );
+
+        const filePath = path.join(__dirname, '..', imageUrl);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        res.json({
+            success: true,
+            message: 'Image deleted successfully',
+            photos: updatedPhotos
+        });
+    } catch (error) {
+        console.error('Delete image error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to delete image' 
+        });
+    }
+};
+
 // ========== BOOKINGS ==========
 
 const getBookingRequests = async (req, res) => {
@@ -508,19 +637,17 @@ const cancelBooking = async (req, res) => {
     }
 };
 
-// ========== DASHBOARD STATS (DAY 3) ==========
+// ========== DASHBOARD ==========
 
 const getDashboardStats = async (req, res) => {
     try {
         const ownerId = req.session.userId;
 
-        // Total properties
         const [properties] = await pool.execute(
             'SELECT COUNT(*) as total FROM properties WHERE owner_id = ?',
             [ownerId]
         );
 
-        // Total bookings by status
         const [bookings] = await pool.execute(`
             SELECT 
                 COUNT(*) as total_bookings,
@@ -533,7 +660,6 @@ const getDashboardStats = async (req, res) => {
             WHERE p.owner_id = ?
         `, [ownerId]);
 
-        // Upcoming bookings
         const [upcomingBookings] = await pool.execute(`
             SELECT 
                 b.*,
@@ -547,7 +673,6 @@ const getDashboardStats = async (req, res) => {
             LIMIT 5
         `, [ownerId]);
 
-        // Recent bookings
         const [recentBookings] = await pool.execute(`
             SELECT 
                 b.*,
@@ -561,7 +686,6 @@ const getDashboardStats = async (req, res) => {
             LIMIT 5
         `, [ownerId]);
 
-        // Top performing properties
         const [topProperties] = await pool.execute(`
             SELECT 
                 p.id,
@@ -600,7 +724,7 @@ const getDashboardStats = async (req, res) => {
     }
 };
 
-// ========== EXPORTS - ALL FUNCTIONS ==========
+// ========== EXPORTS ==========
 
 module.exports = {
     // Authentication
@@ -618,6 +742,11 @@ module.exports = {
     getPropertyById,
     updateProperty,
     deleteProperty,
+    
+    // Image Upload
+    upload,
+    uploadPropertyImages,
+    deletePropertyImage,
     
     // Bookings
     getBookingRequests,
