@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { travelerApi } from '../../services/travelerApi';
+import { login } from '../../services/travelerApi';
 
 function TravelerLogin() {
     const navigate = useNavigate();
@@ -31,11 +31,11 @@ function TravelerLogin() {
         setLoading(true);
 
         try {
-            const response = await travelerApi.login(formData);
+            const response = await login(formData);
 
-            if (response.success) {
+            if (response.data.success) {
                 // Store user info in localStorage
-                localStorage.setItem('user', JSON.stringify(response.user));
+                localStorage.setItem('user', JSON.stringify(response.data.user));
                 // Navigate to dashboard
                 navigate('/traveler/dashboard');
             }

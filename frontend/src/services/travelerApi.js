@@ -10,31 +10,27 @@ const api = axios.create({
     }
 });
 
-export const travelerApi = {
-    signup: async (userData) => {
-        const response = await api.post('/signup', userData);
-        return response.data;
-    },
+// Authentication
+export const signup = (data) => api.post('/signup', data);
+export const login = (data) => api.post('/login', data);
+export const logout = () => api.post('/logout');
 
-    login: async (credentials) => {
-        const response = await api.post('/login', credentials);
-        return response.data;
-    },
+// Profile
+export const getProfile = () => api.get('/profile');
+export const updateProfile = (data) => api.put('/profile', data);
 
-    logout: async () => {
-        const response = await api.post('/logout');
-        return response.data;
-    },
+// Properties
+export const searchProperties = (params) => api.get('/properties/search', { params });
+export const getPropertyDetails = (id) => api.get(`/properties/${id}`);
 
-    getProfile: async () => {
-        const response = await api.get('/profile');
-        return response.data;
-    },
+// Bookings
+export const createBooking = (data) => api.post('/bookings', data);
+export const getBookings = (status) => api.get('/bookings', { params: { status } });
+export const cancelBooking = (id) => api.delete(`/bookings/${id}`);
 
-    updateProfile: async (profileData) => {
-        const response = await api.put('/profile', profileData);
-        return response.data;
-    }
-};
+// Favorites
+export const addFavorite = (propertyId) => api.post(`/favorites/${propertyId}`);
+export const getFavorites = () => api.get('/favorites');
+export const removeFavorite = (propertyId) => api.delete(`/favorites/${propertyId}`);
 
-export default travelerApi;
+export default api;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { travelerApi } from '../../services/travelerApi';
+import { signup } from '../../services/travelerApi';
+
 function TravelerSignup() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -17,7 +18,7 @@ function TravelerSignup() {
             ...formData,
             [e.target.name]: e.target.value
         });
-        setError(''); // Clear error when user types
+        setError('');
     };
 
     const handleSubmit = async (e) => {
@@ -43,13 +44,13 @@ function TravelerSignup() {
         setLoading(true);
 
         try {
-            const response = await travelerApi.signup({
+            const response = await signup({
                 name: formData.name,
                 email: formData.email,
                 password: formData.password
             });
 
-            if (response.success) {
+            if (response.data.success) {
                 alert('Account created successfully! Please login.');
                 navigate('/traveler/login');
             }
