@@ -410,6 +410,98 @@ router.delete('/bookings/:id', isAuthenticated, isTraveler, async (req, res) => 
     }
 });
 
+// ==================== AI CONCIERGE ROUTES ====================
+
+// AI Travel Assistant
+router.post('/ai-concierge', isAuthenticated, isTraveler, async (req, res) => {
+    try {
+        const { message } = req.body;
+
+        if (!message) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Please provide a message' 
+            });
+        }
+
+        // Optional: Try Hugging Face free inference API if HF_API_KEY is set
+        // Get free key at https://huggingface.co/settings/tokens
+        if (process.env.HF_API_KEY) {
+            try {
+                const axios = require('axios');
+                const prompt = `You are a helpful travel booking assistant for an Airbnb-like platform. Answer concisely and actionably.\n\nUser: ${message}\nAssistant:`;
+                
+                const aiResp = await axios.post(
+                    'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2',
+                    { inputs: prompt, parameters: { max_new_tokens: 200, temperature: 0.3 } },
+                    { 
+                        headers: { 'Authorization': `Bearer ${process.env.HF_API_KEY}` },
+                        timeout: 8000
+                    }
+                );
+
+                const content = aiResp.data?.[0]?.generated_text?.split('Assistant:')?.[1]?.trim();
+                if (content && content.length > 10) {
+                    return res.json({ success: true, response: content });
+                }
+            } catch (e) {
+                console.warn('HF AI call failed, falling back to rule-based:', e.message);
+            }
+        }
+
+        // Simple rule-based responses (you can integrate OpenAI API here later)
+        let response = '';
+
+        const lowerMessage = message.toLowerCase();
+
+        // PRIORITIZE date change/modify intents before generic booking
+        if (
+            lowerMessage.includes('modify') ||
+            lowerMessage.includes('change') ||
+            lowerMessage.includes('resched') ||
+            lowerMessage.includes('date') ||
+            lowerMessage.includes('check-in') ||
+            lowerMessage.includes('check in') ||
+            lowerMessage.includes('check-out') ||
+            lowerMessage.includes('check out') ||
+            lowerMessage.includes('extend') ||
+            lowerMessage.includes('shorten')
+        ) {
+            response = 'To change booking dates: If your booking is pending, cancel it from My Bookings and submit a new request with the updated dates. If already accepted, please contact the host from the booking details to request a change. Availability is not guaranteed until the host confirms.';
+        } else if (lowerMessage.includes('cancel')) {
+            response = 'You can cancel pending bookings from the "My Bookings" page. Just click on the booking and select "Cancel Request". Note that once a booking is accepted, cancellation policies may apply. Contact the host for accepted bookings.';
+        } else if (lowerMessage.includes('favorite') || lowerMessage.includes('favourite') || lowerMessage.includes('heart') || lowerMessage.includes('save')) {
+            response = 'Open a property\'s details page and click the heart icon to add it to Favorites. You can remove it by clicking the heart again.';
+        } else if (lowerMessage.includes('payment') || lowerMessage.includes('pay')) {
+            response = 'Payment is processed securely after the owner accepts your booking request. We accept all major credit cards and digital payment methods. You\'ll receive a confirmation email with payment details.';
+        } else if (lowerMessage.includes('host') || lowerMessage.includes('owner') || lowerMessage.includes('contact')) {
+            response = 'You can contact the host through the property details page or after your booking is accepted. We provide a secure messaging system to communicate with property owners.';
+        } else if (lowerMessage.includes('search') || lowerMessage.includes('find')) {
+            response = 'Use our search page to find properties! You can filter by location, dates, number of guests, price range, and amenities. Each property shows detailed photos, descriptions, and reviews.';
+        } else if (lowerMessage.includes('review') || lowerMessage.includes('rating')) {
+            response = 'After your stay, you can leave a review for the property. Reviews help other travelers make informed decisions and help hosts improve their service.';
+        } else if (lowerMessage.includes('help') || lowerMessage.includes('support')) {
+            response = 'I\'m here to help! You can ask me about: booking properties, cancellation policies, payment methods, contacting hosts, modifying bookings, searching for properties, and more. What would you like to know?';
+        } else if (lowerMessage.includes('book') || lowerMessage.includes('booking')) {
+            response = 'To book a property: 1) Search for properties on the Search page, 2) Open a property you like, 3) Select your dates and guests, 4) Click "Request Booking". Track status in My Bookings.';
+        } else {
+            response = 'I can help you with booking questions, property searches, cancellations, payments, favorites, and more. Could you please be more specific about what you need help with?';
+        }
+
+        res.json({ 
+            success: true, 
+            response 
+        });
+
+    } catch (error) {
+        console.error('AI concierge error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error processing your request' 
+        });
+    }
+});
+
 // ==================== FAVORITES ROUTES ====================
 
 // Add to Favorites

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { searchProperties } from '../../services/travelerApi';
+import AIChatbot from '../../components/traveler/AIChatbot';
 
 function PropertySearch() {
     const navigate = useNavigate();
@@ -196,6 +197,9 @@ function PropertySearch() {
                     </div>
                 )}
             </div>
+            
+            {/* AI Chatbot */}
+            <AIChatbot />
         </div>
     );
 }

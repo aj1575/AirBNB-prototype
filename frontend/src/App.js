@@ -1,6 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
-import PropertyDetails from './pages/traveler/PropertyDetails';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 // Shared Components
@@ -12,6 +11,9 @@ import TravelerLogin from './pages/traveler/Login';
 import TravelerDashboard from './pages/traveler/Dashboard';
 import TravelerProfile from './pages/traveler/Profile';
 import PropertySearch from './pages/traveler/PropertySearch';
+import PropertyDetails from './pages/traveler/PropertyDetails';
+import MyBookings from './pages/traveler/MyBookings';
+import Favorites from './pages/traveler/Favorites';
 
 // Owner Pages
 import OwnerSignup from './pages/owner/Signup';
@@ -19,14 +21,13 @@ import OwnerLogin from './pages/owner/Login';
 import OwnerDashboard from './pages/owner/Dashboard';
 import OwnerProfile from './pages/owner/Profile';
 import AddEditProperty from './pages/owner/AddProperty';
-import BookingRequests from './pages/owner/BookingRequests';
+import BookingManagement from './pages/owner/BookingManagement';
 
 function App() {
     return (
         <BrowserRouter>
             <Navbar />
             <Routes>
-                {/* Home */}
                 <Route path="/" element={<HomePage />} />
 
                 {/* Traveler Routes */}
@@ -36,6 +37,8 @@ function App() {
                 <Route path="/traveler/profile" element={<TravelerProfile />} />
                 <Route path="/traveler/search" element={<PropertySearch />} />
                 <Route path="/traveler/property/:id" element={<PropertyDetails />} />
+                <Route path="/traveler/bookings" element={<MyBookings />} />
+                <Route path="/traveler/favorites" element={<Favorites />} />
 
                 {/* Owner Routes */}
                 <Route path="/owner/signup" element={<OwnerSignup />} />
@@ -44,7 +47,7 @@ function App() {
                 <Route path="/owner/profile" element={<OwnerProfile />} />
                 <Route path="/owner/properties/new" element={<AddEditProperty />} />
                 <Route path="/owner/properties/edit/:id" element={<AddEditProperty />} />
-                <Route path="/owner/bookings" element={<BookingRequests />} />
+                <Route path="/owner/bookings" element={<BookingManagement />} />
             </Routes>
         </BrowserRouter>
     );
@@ -53,7 +56,6 @@ function App() {
 function HomePage() {
     return (
         <div>
-            {/* Hero Section */}
             <div className="bg-light py-5">
                 <div className="container text-center py-5">
                     <h1 className="display-4 fw-bold mb-4">Find Your Perfect Stay</h1>
@@ -70,7 +72,6 @@ function HomePage() {
                 </div>
             </div>
 
-            {/* Features Section */}
             <div className="container py-5">
                 <div className="row g-4">
                     <div className="col-md-4">
@@ -97,7 +98,6 @@ function HomePage() {
                 </div>
             </div>
 
-            {/* Footer */}
             <footer className="bg-dark text-white py-4 mt-5">
                 <div className="container text-center">
                     <p className="mb-0">© 2024 Airbnb Clone - CMPE 273 Lab Project</p>

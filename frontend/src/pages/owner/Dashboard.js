@@ -80,6 +80,19 @@ const OwnerDashboard = () => {
                 </div>
             </div>
 
+            {/* Booking Requests Card */}
+<div className="col-md-4">
+    <Link to="/owner/bookings" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <div className="card h-100 shadow-sm" style={{ cursor: 'pointer' }}>
+            <div className="card-body text-center">
+                <h5 className="card-title">Booking Requests</h5>
+                <p className="small">Manage booking requests</p>
+                <button className="btn btn-primary">View Requests</button>
+            </div>
+        </div>
+    </Link>
+</div>
+
             {/* Upcoming Bookings */}
             {stats.upcomingBookings.length > 0 && (
                 <div className="card mb-4">

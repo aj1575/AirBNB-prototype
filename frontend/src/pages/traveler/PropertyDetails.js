@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getPropertyDetails, createBooking } from '../../services/travelerApi';
+import { getPropertyDetails, createBooking, addFavorite, removeFavorite, getFavorites } from '../../services/travelerApi';
 
 function PropertyDetails() {
     const { id } = useParams();
@@ -14,6 +14,8 @@ function PropertyDetails() {
         guests: 1
     });
     const [bookingLoading, setBookingLoading] = useState(false);
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [favLoading, setFavLoading] = useState(false);
 
     useEffect(() => {
         fetchProperty();
@@ -25,6 +27,14 @@ function PropertyDetails() {
             if (response.data.success) {
                 setProperty(response.data.property);
             }
+            // Also fetch favorites to determine if this property is favorited
+            try {
+                const favRes = await getFavorites();
+                if (favRes.data?.success && Array.isArray(favRes.data.favorites)) {
+                    const exists = favRes.data.favorites.some(p => String(p.id) === String(id));
+                    setIsFavorite(exists);
+                }
+            } catch (_) { /* ignore favorites fetch failure */ }
         } catch (err) {
             setError('Failed to load property details');
             console.error('Error:', err);
@@ -69,6 +79,24 @@ function PropertyDetails() {
         }
     };
 
+    const toggleFavorite = async () => {
+        if (!property || favLoading) return;
+        setFavLoading(true);
+        try {
+            if (isFavorite) {
+                await removeFavorite(property.id);
+                setIsFavorite(false);
+            } else {
+                await addFavorite(property.id);
+                setIsFavorite(true);
+            }
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to update favorite');
+        } finally {
+            setFavLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="container mt-5 text-center">
@@ -106,7 +134,18 @@ function PropertyDetails() {
                     {/* Property Info */}
                     <div className="card shadow-sm mb-4">
                         <div className="card-body">
-                            <h2>{property.name}</h2>
+                            <div className="d-flex justify-content-between align-items-start">
+                                <h2 className="mb-0">{property.name}</h2>
+                                <button
+                                    className={`btn btn-sm ${isFavorite ? 'btn-danger' : 'btn-outline-danger'}`}
+                                    onClick={toggleFavorite}
+                                    disabled={favLoading}
+                                    aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                                    title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                                >
+                                    {isFavorite ? '♥' : '♡'}
+                                </button>
+                            </div>
                             <p className="text-muted mb-3">
                                 📍 {property.location}
                             </p>
@@ -123,7 +162,7 @@ function PropertyDetails() {
                                 </div>
                                 <div className="col-md-6">
                                     <h5>Pricing</h5>
-                                    <p className="display-5 text-primary">${property.pricing}<span className="small"> / night</span></p>
+                                    <p className="display-5" style={{color:'#6a11cb'}}>${property.pricing}<span className="small"> / night</span></p>
                                 </div>
                             </div>
 
@@ -190,10 +229,11 @@ function PropertyDetails() {
 
                                 <button
                                     type="submit"
-                                    className="btn btn-primary w-100"
+                                    className="btn w-100"
+                                    style={{background:'#6a11cb', border:'none'}}
                                     disabled={bookingLoading}
                                 >
-                                    {bookingLoading ? 'Booking...' : 'Book Now'}
+                                    {bookingLoading ? 'Booking...' : 'Request Booking'}
                                 </button>
                             </form>
 
