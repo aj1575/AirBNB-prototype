@@ -33,6 +33,8 @@ app.use(session({
 
 // Log all requests (for debugging)
 app.use((req, res, next) => {
+    console.log('Session:', req.session);
+    console.log('User ID:', req.session?.userId);
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
 });

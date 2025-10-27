@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const OwnerDashboard = () => {
+    const [properties, setProperties] = useState([]);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchDashboardData();
+        fetchProperties();
     }, []);
 
     const fetchDashboardData = async () => {
@@ -24,6 +26,41 @@ const OwnerDashboard = () => {
         } catch (error) {
             console.error('Dashboard error:', error);
             setLoading(false);
+        }
+    };
+
+    const fetchProperties = async () => {
+        try {
+            const response = await axios.get(
+                `${process.env.REACT_APP_API_URL}/api/owner/properties`,
+                { withCredentials: true }
+            );
+
+            if (response.data.success) {
+                setProperties(response.data.properties);
+            }
+        } catch (error) {
+            console.error('Fetch properties error:', error);
+        }
+    };
+
+    const handleDelete = async (propertyId) => {
+        if (!window.confirm('Are you sure you want to delete this property?')) {
+            return;
+        }
+
+        try {
+            const response = await axios.delete(
+                `${process.env.REACT_APP_API_URL}/api/owner/properties/${propertyId}`,
+                { withCredentials: true }
+            );
+
+            if (response.data.success) {
+                alert('Property deleted successfully');
+                fetchProperties(); // Refresh list
+            }
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to delete property');
         }
     };
 
@@ -80,21 +117,109 @@ const OwnerDashboard = () => {
                 </div>
             </div>
 
-            {/* Booking Requests Card */}
-<div className="col-md-4">
-    <Link to="/owner/bookings" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <div className="card h-100 shadow-sm" style={{ cursor: 'pointer' }}>
-            <div className="card-body text-center">
-                <h5 className="card-title">Booking Requests</h5>
-                <p className="small">Manage booking requests</p>
-                <button className="btn btn-primary">View Requests</button>
+            {/* Properties List with Images */}
+            <div className="card mb-4">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                    <h5 className="mb-0">Your Properties</h5>
+                    <Link to="/owner/properties/new" className="btn btn-sm btn-primary">
+                        + Add New
+                    </Link>
+                </div>
+                <div className="card-body">
+                    {properties.length === 0 ? (
+                        <div className="alert alert-info">
+                            No properties yet. <Link to="/owner/properties/new">Add your first property</Link>
+                        </div>
+                    ) : (
+                        <div className="row">
+                            {properties.map(property => {
+                                const firstImage = property.photos ? property.photos.split(',').filter(p => p)[0] : null;
+                                
+                                return (
+                                    <div key={property.id} className="col-md-6 col-lg-4 mb-4">
+                                        <div className="card h-100 shadow-sm">
+                                            {/* Property Image */}
+                                            {firstImage ? (
+                                                <img
+                                                    src={`${process.env.REACT_APP_API_URL}${firstImage}`}
+                                                    alt={property.name}
+                                                    className="card-img-top"
+                                                    style={{ 
+                                                        height: '200px', 
+                                                        objectFit: 'cover',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                    onClick={() => window.location.href = `/owner/properties/edit/${property.id}`}
+                                                />
+                                            ) : (
+                                                <div 
+                                                    className="card-img-top bg-secondary d-flex align-items-center justify-content-center text-white"
+                                                    style={{ height: '200px' }}
+                                                >
+                                                    <div className="text-center">
+                                                        <i className="bi bi-image" style={{ fontSize: '3rem' }}></i>
+                                                        <p className="mb-0 mt-2">No Image</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            <div className="card-body">
+                                                <h5 className="card-title">{property.name}</h5>
+                                                <p className="text-muted mb-2">
+                                                    <i className="bi bi-geo-alt"></i> {property.location}
+                                                </p>
+                                                <p className="card-text small text-muted">{property.type}</p>
+                                                <p className="mb-2">
+                                                    <strong className="text-primary">${property.pricing}</strong> / night
+                                                </p>
+                                                <p className="small text-muted mb-2">
+                                                    {property.bedrooms} bed · {property.bathrooms} bath · {property.max_guests} guests
+                                                </p>
+                                                
+                                                {/* Booking Stats */}
+                                                <div className="mb-3">
+                                                    <small className="text-muted">
+                                                        {property.total_bookings || 0} total bookings
+                                                        {property.pending_bookings > 0 && (
+                                                            <span className="badge bg-warning ms-2">
+                                                                {property.pending_bookings} pending
+                                                            </span>
+                                                        )}
+                                                    </small>
+                                                </div>
+
+                                                <div className="mb-2">
+                                                    <span className={`badge ${property.available ? 'bg-success' : 'bg-secondary'}`}>
+                                                        {property.available ? 'Available' : 'Unavailable'}
+                                                    </span>
+                                                </div>
+                                                
+                                                <div className="d-flex justify-content-between mt-3">
+                                                    <Link 
+                                                        to={`/owner/properties/edit/${property.id}`} 
+                                                        className="btn btn-sm btn-outline-primary"
+                                                    >
+                                                        <i className="bi bi-pencil"></i> Edit
+                                                    </Link>
+                                                    <button 
+                                                        onClick={() => handleDelete(property.id)}
+                                                        className="btn btn-sm btn-outline-danger"
+                                                    >
+                                                        <i className="bi bi-trash"></i> Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
-    </Link>
-</div>
 
             {/* Upcoming Bookings */}
-            {stats.upcomingBookings.length > 0 && (
+            {stats.upcomingBookings && stats.upcomingBookings.length > 0 && (
                 <div className="card mb-4">
                     <div className="card-header">
                         <h5 className="mb-0">Upcoming Bookings</h5>
@@ -129,7 +254,7 @@ const OwnerDashboard = () => {
             )}
 
             {/* Top Properties */}
-            {stats.topProperties.length > 0 && (
+            {stats.topProperties && stats.topProperties.length > 0 && (
                 <div className="card mb-4">
                     <div className="card-header">
                         <h5 className="mb-0">Top Performing Properties</h5>
@@ -155,7 +280,7 @@ const OwnerDashboard = () => {
                                             </td>
                                             <td>{property.location}</td>
                                             <td>{property.booking_count}</td>
-                                            <td>${parseFloat(property.revenue).toFixed(2)}</td>
+                                            <td>${parseFloat(property.revenue || 0).toFixed(2)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -166,8 +291,8 @@ const OwnerDashboard = () => {
             )}
 
             {/* Recent Activity */}
-            {stats.recentBookings.length > 0 && (
-                <div className="card">
+            {stats.recentBookings && stats.recentBookings.length > 0 && (
+                <div className="card mb-4">
                     <div className="card-header d-flex justify-content-between align-items-center">
                         <h5 className="mb-0">Recent Bookings</h5>
                         <Link to="/owner/bookings" className="btn btn-sm btn-outline-primary">
@@ -206,19 +331,22 @@ const OwnerDashboard = () => {
             )}
 
             {/* Quick Actions */}
-            <div className="row mt-4">
+            <div className="row mt-4 mb-4">
                 <div className="col-md-4">
                     <Link to="/owner/properties/new" className="btn btn-outline-primary w-100 mb-3">
-                        + Add Property
+                        <i className="bi bi-plus-circle me-2"></i>
+                        Add Property
                     </Link>
                 </div>
                 <div className="col-md-4">
                     <Link to="/owner/bookings" className="btn btn-outline-warning w-100 mb-3">
+                        <i className="bi bi-calendar-check me-2"></i>
                         View Booking Requests
                     </Link>
                 </div>
                 <div className="col-md-4">
                     <Link to="/owner/profile" className="btn btn-outline-secondary w-100 mb-3">
+                        <i className="bi bi-person me-2"></i>
                         Edit Profile
                     </Link>
                 </div>

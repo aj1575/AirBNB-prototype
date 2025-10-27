@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import ImageUpload from '../../components/owner/ImageUpload';
 
 const AddEditProperty = () => {
     const { id } = useParams(); // For edit mode
@@ -21,6 +22,7 @@ const AddEditProperty = () => {
     });
 
     const [loading, setLoading] = useState(false);
+    const [propertyImages, setPropertyImages] = useState([]);
 
     const amenitiesList = ['WiFi', 'Kitchen', 'Parking', 'Pool', 'Gym', 'Pet Friendly', 'Air Conditioning', 'Heating', 'Washer', 'Dryer'];
     const propertyTypes = ['Apartment', 'House', 'Condo', 'Villa', 'Studio', 'Townhouse'];
@@ -29,6 +31,7 @@ const AddEditProperty = () => {
         if (isEditMode) {
             fetchProperty();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const fetchProperty = async () => {
@@ -44,6 +47,7 @@ const AddEditProperty = () => {
                     ...property,
                     amenities: property.amenities ? property.amenities.split(',') : []
                 });
+                setPropertyImages(property.photos ? property.photos.split(',').filter(p => p) : []);
             }
         } catch (error) {
             alert('Failed to fetch property');
@@ -90,8 +94,12 @@ const AddEditProperty = () => {
         }
     };
 
+    const handleImageUploadSuccess = (updatedPhotos) => {
+        setPropertyImages(updatedPhotos);
+    };
+
     return (
-        <div className="container mt-4">
+        <div className="container mt-4 mb-5">
             <h2>{isEditMode ? 'Edit Property' : 'Add New Property'}</h2>
             
             <form onSubmit={handleSubmit} className="mt-4">
@@ -248,6 +256,18 @@ const AddEditProperty = () => {
                     </div>
                 </div>
             </form>
+
+            {/* Image Upload Section - Only shown in Edit Mode */}
+            {isEditMode && (
+                <div className="mt-5">
+                    <hr />
+                    <ImageUpload
+                        propertyId={id}
+                        existingImages={propertyImages}
+                        onUploadSuccess={handleImageUploadSuccess}
+                    />
+                </div>
+            )}
         </div>
     );
 };
