@@ -172,3 +172,15 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Project specific
+uploads/
+cookies.txt
+backend/uploads/profiles/*
+!backend/uploads/profiles/.gitkeep
+backend/uploads/properties/*
+!backend/uploads/properties/.gitkeep
+
+# Documentation (temporary files)
+*_TEMP.md
+*_DRAFT.md
