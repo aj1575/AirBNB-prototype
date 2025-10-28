@@ -8,7 +8,7 @@ function MyBookings() {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [activeTab, setActiveTab] = useState('accepted');
+    const [activeTab, setActiveTab] = useState('upcoming');
 
     useEffect(() => {
         fetchBookings();
@@ -48,7 +48,8 @@ function MyBookings() {
         const colors = {
             pending: 'warning',
             accepted: 'success',
-            cancelled: 'danger'
+            cancelled: 'danger',
+            completed: 'info'
         };
         return (
             <span className={`badge bg-${colors[status] || 'secondary'}`}>
@@ -70,6 +71,14 @@ function MyBookings() {
             <ul className="nav nav-tabs mb-4">
                 <li className="nav-item">
                     <button
+                        className={`nav-link ${activeTab === 'upcoming' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('upcoming')}
+                    >
+                        Upcoming
+                    </button>
+                </li>
+                <li className="nav-item">
+                    <button
                         className={`nav-link ${activeTab === 'pending' ? 'active' : ''}`}
                         onClick={() => setActiveTab('pending')}
                     >
@@ -78,10 +87,10 @@ function MyBookings() {
                 </li>
                 <li className="nav-item">
                     <button
-                        className={`nav-link ${activeTab === 'accepted' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('accepted')}
+                        className={`nav-link ${activeTab === 'completed' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('completed')}
                     >
-                        Accepted
+                        Completed
                     </button>
                 </li>
                 <li className="nav-item">
@@ -115,7 +124,7 @@ function MyBookings() {
                                         {getStatusBadge(booking.status)}
                                     </div>
 
-                                    <p className="text-muted mb-2">📍 {booking.location}</p>
+                                    <p className="text-muted mb-2">Location: {booking.location}</p>
 
                                     <div className="row mb-3">
                                         <div className="col-6">
@@ -150,6 +159,11 @@ function MyBookings() {
                                     {booking.status === 'accepted' && (
                                         <div className="alert alert-success mb-0">
                                             ✓ Booking Confirmed!
+                                        </div>
+                                    )}
+                                    {booking.status === 'completed' && (
+                                        <div className="alert alert-info mb-0">
+                                            ✓ Trip Completed - Thank you for staying!
                                         </div>
                                     )}
                                 </div>

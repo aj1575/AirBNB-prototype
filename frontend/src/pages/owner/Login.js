@@ -31,6 +31,8 @@ const OwnerLogin = () => {
             );
 
             if (response.data.success) {
+                // Store user data in localStorage for ProtectedRoute
+                localStorage.setItem('user', JSON.stringify({ role: 'owner', ...response.data.user }));
                 navigate('/owner/dashboard');
             }
         } catch (err) {

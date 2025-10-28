@@ -6,7 +6,7 @@ const Home = () => {
         <div className="container">
             <div className="row min-vh-100 align-items-center">
                 <div className="col-12 text-center">
-                    <h1 className="display-3 mb-4">🏠 Welcome to Airbnb Prototype</h1>
+                    <h1 className="display-3 mb-4">Welcome to Airbnb Prototype</h1>
                     <p className="lead mb-5">CMPE 273 - Lab 1 Project</p>
                     
                     <div className="row justify-content-center">

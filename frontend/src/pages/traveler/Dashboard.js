@@ -27,6 +27,7 @@ function TravelerDashboard() {
 
     useEffect(() => {
         applyFilters();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters, properties]);
 
     const fetchAllProperties = async () => {
@@ -108,7 +109,7 @@ function TravelerDashboard() {
                 <div className="col-md-4">
                     <div className="card h-100 shadow-sm">
                         <div className="card-body text-center">
-                            <div style={{fontSize: 48, marginBottom: 16}}>🔍</div>
+                            <div style={{fontSize: 48, marginBottom: 16}}><i className="bi bi-search"></i></div>
                             <h5 className="card-title">Search Properties</h5>
                             <p className="text-muted">Find your perfect place to stay</p>
                             <Link to="/traveler/search" className="btn btn-primary" style={{background: '#6a11cb', border: 'none'}}>Start Searching</Link>
@@ -118,7 +119,7 @@ function TravelerDashboard() {
                 <div className="col-md-4">
                     <div className="card h-100 shadow-sm">
                         <div className="card-body text-center">
-                            <div style={{fontSize: 48, marginBottom: 16}}>📅</div>
+                            <div style={{fontSize: 48, marginBottom: 16}}><i className="bi bi-calendar-check"></i></div>
                             <h5 className="card-title">My Bookings</h5>
                             <p className="text-muted">View and manage your reservations</p>
                             <Link to="/traveler/bookings" className="btn btn-primary" style={{background: '#6a11cb', border: 'none'}}>View Bookings</Link>
@@ -128,7 +129,7 @@ function TravelerDashboard() {
                 <div className="col-md-4">
                     <div className="card h-100 shadow-sm">
                         <div className="card-body text-center">
-                            <div style={{fontSize: 48, marginBottom: 16}}>❤️</div>
+                            <div style={{fontSize: 48, marginBottom: 16}}><i className="bi bi-heart-fill"></i></div>
                             <h5 className="card-title">Favorites</h5>
                             <p className="text-muted">Save properties you love</p>
                             <Link to="/traveler/favorites" className="btn btn-primary" style={{background: '#6a11cb', border: 'none'}}>View Favorites</Link>
@@ -207,30 +208,62 @@ function TravelerDashboard() {
                     </div>
                 ) : (
                     <div className="row g-4">
-                        {filteredProperties.map(property => (
-                            <div key={property.id} className="col-md-4 col-lg-3">
-                                <div 
-                                    className="card h-100 shadow-sm" 
-                                    style={{cursor: 'pointer', transition: 'transform 0.2s'}}
-                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                                    onClick={() => navigate(`/traveler/property/${property.id}`)}
-                                >
-                                    <div className="bg-secondary" style={{height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                        <span style={{fontSize: 48}}>🏠</span>
-                                    </div>
-                                    <div className="card-body">
-                                        <h6 className="card-title text-truncate">{property.name}</h6>
-                                        <p className="text-muted small mb-1">📍 {property.location}</p>
-                                        <p className="text-muted small mb-2">{property.type} · {property.bedrooms} bed · {property.bathrooms} bath</p>
-                                        <div className="d-flex justify-content-between align-items-center">
-                                            <span className="fw-bold" style={{color: '#6a11cb'}}>${property.pricing}</span>
-                                            <span className="small text-muted">/ night</span>
+                        {filteredProperties.map(property => {
+                            const firstImage = property.photos ? property.photos.split(',')[0] : null;
+                            const imageUrl = firstImage ? `${process.env.REACT_APP_API_URL}${firstImage}` : null;
+                            
+                            return (
+                                <div key={property.id} className="col-md-4 col-lg-3">
+                                    <div 
+                                        className="card h-100 shadow-sm" 
+                                        style={{cursor: 'pointer', transition: 'transform 0.2s'}}
+                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                        onClick={() => navigate(`/traveler/property/${property.id}`)}
+                                    >
+                                        {imageUrl ? (
+                                            <img 
+                                                src={imageUrl} 
+                                                alt={property.name}
+                                                style={{
+                                                    height: 200, 
+                                                    width: '100%', 
+                                                    objectFit: 'cover',
+                                                    borderTopLeftRadius: '0.375rem',
+                                                    borderTopRightRadius: '0.375rem'
+                                                }}
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                    e.target.nextSibling.style.display = 'flex';
+                                                }}
+                                            />
+                                        ) : null}
+                                        <div 
+                                            className="bg-secondary" 
+                                            style={{
+                                                height: 200, 
+                                                display: imageUrl ? 'none' : 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center',
+                                                borderTopLeftRadius: '0.375rem',
+                                                borderTopRightRadius: '0.375rem'
+                                            }}
+                                        >
+                                            <span style={{fontSize: 48}}>No Image</span>
+                                        </div>
+                                        <div className="card-body">
+                                            <h6 className="card-title text-truncate">{property.name}</h6>
+                                            <p className="text-muted small mb-1">Location: {property.location}</p>
+                                            <p className="text-muted small mb-2">{property.type} · {property.bedrooms} bed · {property.bathrooms} bath</p>
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <span className="fw-bold" style={{color: '#6a11cb'}}>${property.pricing}</span>
+                                                <span className="small text-muted">/ night</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

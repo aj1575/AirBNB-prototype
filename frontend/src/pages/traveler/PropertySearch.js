@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { searchProperties } from '../../services/travelerApi';
 import AIChatbot from '../../components/traveler/AIChatbot';
+import LOCATIONS from '../../utils/locations';
 
 function PropertySearch() {
     const navigate = useNavigate();
@@ -51,7 +52,12 @@ function PropertySearch() {
             {/* Header */}
             <div className="bg-primary text-white py-4">
                 <div className="container">
-                    <h1 className="mb-0">Find Your Perfect Stay</h1>
+                    <div className="d-flex justify-content-between align-items-center">
+                        <h1 className="mb-0">Find Your Perfect Stay</h1>
+                        <Link to="/traveler/dashboard" className="btn btn-light">
+                            ← Back to Dashboard
+                        </Link>
+                    </div>
                 </div>
             </div>
 
@@ -63,14 +69,17 @@ function PropertySearch() {
                             <div className="row g-3">
                                 <div className="col-md-3">
                                     <label className="form-label">Location</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
+                                    <select
+                                        className="form-select"
                                         name="location"
                                         value={searchParams.location}
                                         onChange={handleChange}
-                                        placeholder="Where do you want to go?"
-                                    />
+                                    >
+                                        <option value="">All Locations</option>
+                                        {LOCATIONS.map((loc) => (
+                                            <option key={loc} value={loc}>{loc}</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="col-md-3">
@@ -146,14 +155,30 @@ function PropertySearch() {
                         )}
 
                         <div className="row g-4">
-                            {properties.map(property => (
+                            {properties.map(property => {
+                                const firstImage = property.photos ? property.photos.split(',')[0] : null;
+                                const imageUrl = firstImage ? `${process.env.REACT_APP_API_URL}${firstImage}` : null;
+                                
+                                return (
                                 <div key={property.id} className="col-md-6 col-lg-4">
                                     <div className="card h-100 shadow-sm hover-shadow" style={{ cursor: 'pointer' }}>
+                                        {imageUrl ? (
+                                            <img 
+                                                src={imageUrl} 
+                                                alt={property.name}
+                                                className="card-img-top"
+                                                style={{ height: '200px', objectFit: 'cover' }}
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                    e.target.nextSibling.style.display = 'flex';
+                                                }}
+                                            />
+                                        ) : null}
                                         <div 
                                             className="card-img-top bg-secondary d-flex align-items-center justify-content-center"
-                                            style={{ height: '200px' }}
+                                            style={{ height: '200px', display: imageUrl ? 'none' : 'flex' }}
                                         >
-                                            <span className="text-white display-4">🏠</span>
+                                            <span className="text-white display-4">No Image</span>
                                         </div>
                                         <div className="card-body">
                                             <h5 className="card-title">{property.name}</h5>
@@ -183,7 +208,8 @@ function PropertySearch() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}

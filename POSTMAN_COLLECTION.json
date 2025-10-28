@@ -1,0 +1,694 @@
+{
+  "info": {
+    "name": "Airbnb Prototype API - CMPE 273",
+    "description": "Complete API documentation for Airbnb Clone project with Traveler and Owner endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Traveler APIs",
+      "item": [
+        {
+          "name": "Authentication",
+          "item": [
+            {
+              "name": "Traveler Signup",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"1234567890\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/signup",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "signup"]
+                },
+                "description": "Register a new traveler account"
+              },
+              "response": [
+                {
+                  "name": "Success Response",
+                  "originalRequest": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{base_url}}/api/traveler/signup"
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Traveler registered successfully\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Traveler Login",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"yuktaa@gmail.com\",\n  \"password\": \"123456\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "login"]
+                },
+                "description": "Login as traveler. Test credentials: yuktaa@gmail.com / 123456"
+              },
+              "response": [
+                {
+                  "name": "Success Response",
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Login successful\",\n  \"user\": {\n    \"id\": 1,\n    \"name\": \"Yuktaa\",\n    \"email\": \"yuktaa@gmail.com\",\n    \"role\": \"traveler\"\n  }\n}"
+                }
+              ]
+            },
+            {
+              "name": "Traveler Logout",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/logout",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "logout"]
+                },
+                "description": "Logout traveler and destroy session"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get Profile",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/profile",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "profile"]
+                },
+                "description": "Get traveler profile information. Requires authentication."
+              },
+              "response": [
+                {
+                  "name": "Success Response",
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"success\": true,\n  \"profile\": {\n    \"id\": 1,\n    \"name\": \"Yuktaa\",\n    \"email\": \"yuktaa@gmail.com\",\n    \"phone\": \"1234567890\",\n    \"profile_picture\": \"/uploads/profiles/image.jpg\"\n  }\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Profile",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"John Updated\",\n  \"phone\": \"9876543210\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/profile",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "profile"]
+                },
+                "description": "Update traveler profile"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Properties",
+          "item": [
+            {
+              "name": "Search Properties",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/properties/search?location=San Francisco, CA&guests=2",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "properties", "search"],
+                  "query": [
+                    {
+                      "key": "location",
+                      "value": "San Francisco, CA",
+                      "description": "City location"
+                    },
+                    {
+                      "key": "guests",
+                      "value": "2",
+                      "description": "Number of guests"
+                    },
+                    {
+                      "key": "startDate",
+                      "value": "2025-11-01",
+                      "disabled": true
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "2025-11-05",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "Search for properties with filters"
+              },
+              "response": [
+                {
+                  "name": "Success Response",
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"success\": true,\n  \"properties\": [\n    {\n      \"id\": 1,\n      \"name\": \"Luxury Downtown Loft\",\n      \"type\": \"Loft\",\n      \"location\": \"San Francisco, CA\",\n      \"pricing\": \"350.00\",\n      \"bedrooms\": 2,\n      \"bathrooms\": 2,\n      \"max_guests\": 4,\n      \"images\": [\"/uploads/properties/image1.jpg\"]\n    }\n  ]\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Property Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/properties/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "properties", "1"]
+                },
+                "description": "Get detailed information about a specific property"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Bookings",
+          "item": [
+            {
+              "name": "Create Booking",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"property_id\": 1,\n  \"start_date\": \"2025-11-01\",\n  \"end_date\": \"2025-11-05\",\n  \"guests\": 2,\n  \"total_price\": 1400.00\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/bookings",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "bookings"]
+                },
+                "description": "Create a new booking request"
+              },
+              "response": [
+                {
+                  "name": "Success Response",
+                  "status": "Created",
+                  "code": 201,
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Booking created successfully\",\n  \"bookingId\": 1\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get My Bookings",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/bookings",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "bookings"]
+                },
+                "description": "Get all bookings for logged-in traveler"
+              },
+              "response": []
+            },
+            {
+              "name": "Cancel Booking",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/bookings/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "bookings", "1"]
+                },
+                "description": "Cancel a booking by ID"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Favorites",
+          "item": [
+            {
+              "name": "Add to Favorites",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/favorites/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "favorites", "1"]
+                },
+                "description": "Add a property to favorites. Replace '1' with property ID"
+              },
+              "response": [
+                {
+                  "name": "Success Response",
+                  "status": "Created",
+                  "code": 201,
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Added to favorites\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Favorites",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/favorites",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "favorites"]
+                },
+                "description": "Get all favorited properties"
+              },
+              "response": [
+                {
+                  "name": "Success Response",
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"success\": true,\n  \"favorites\": [\n    {\n      \"id\": 1,\n      \"name\": \"Luxury Downtown Loft\",\n      \"location\": \"San Francisco, CA\",\n      \"pricing\": \"350.00\",\n      \"images\": [\"/uploads/properties/image1.jpg\"],\n      \"favorited_at\": \"2025-10-27T10:00:00.000Z\"\n    }\n  ]\n}"
+                }
+              ]
+            },
+            {
+              "name": "Remove from Favorites",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/favorites/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "favorites", "1"]
+                },
+                "description": "Remove a property from favorites"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "AI Chatbot",
+          "item": [
+            {
+              "name": "AI Concierge",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"message\": \"Plan a 3-day trip to San Francisco, vegan, 2 kids\",\n  \"booking_context\": {\n    \"location\": \"San Francisco, CA\",\n    \"start_date\": \"2025-11-01\",\n    \"end_date\": \"2025-11-03\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/traveler/ai-concierge",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "traveler", "ai-concierge"]
+                },
+                "description": "AI-powered travel assistant for itineraries, restaurants, activities"
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Owner APIs",
+      "item": [
+        {
+          "name": "Authentication",
+          "item": [
+            {
+              "name": "Owner Signup",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Jane Owner\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"9876543210\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/owner/signup",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "signup"]
+                },
+                "description": "Register a new owner account"
+              },
+              "response": []
+            },
+            {
+              "name": "Owner Login",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"a@gmail.com\",\n  \"password\": \"123456\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/owner/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "login"]
+                },
+                "description": "Login as owner. Test credentials: a@gmail.com / 123456"
+              },
+              "response": [
+                {
+                  "name": "Success Response",
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Login successful\",\n  \"user\": {\n    \"id\": 2,\n    \"name\": \"Owner Name\",\n    \"email\": \"a@gmail.com\",\n    \"role\": \"owner\"\n  }\n}"
+                }
+              ]
+            },
+            {
+              "name": "Owner Logout",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/owner/logout",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "logout"]
+                },
+                "description": "Logout owner"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get Profile",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/owner/profile",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "profile"]
+                },
+                "description": "Get owner profile"
+              },
+              "response": []
+            },
+            {
+              "name": "Update Profile",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated Name\",\n  \"phone\": \"1112223333\",\n  \"city\": \"San Francisco\",\n  \"country\": \"USA\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/owner/profile",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "profile"]
+                },
+                "description": "Update owner profile"
+              },
+              "response": []
+            },
+            {
+              "name": "Upload Profile Image",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "profile_image",
+                      "type": "file",
+                      "src": "/path/to/image.jpg"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/owner/profile/image",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "profile", "image"]
+                },
+                "description": "Upload owner profile picture"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Properties",
+          "item": [
+            {
+              "name": "Get My Properties",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/owner/properties",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "properties"]
+                },
+                "description": "Get all properties owned by logged-in owner"
+              },
+              "response": []
+            },
+            {
+              "name": "Create Property",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Beautiful Beach House\",\n  \"type\": \"House\",\n  \"location\": \"Miami, FL\",\n  \"description\": \"Stunning beachfront property\",\n  \"pricing\": 450,\n  \"bedrooms\": 3,\n  \"bathrooms\": 2,\n  \"max_guests\": 6,\n  \"amenities\": [\"WiFi\", \"Pool\", \"Beach Access\"]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/owner/properties",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "properties"]
+                },
+                "description": "Create a new property listing"
+              },
+              "response": []
+            },
+            {
+              "name": "Update Property",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated Property Name\",\n  \"pricing\": 500\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/owner/properties/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "properties", "1"]
+                },
+                "description": "Update property details"
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Property",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/owner/properties/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "properties", "1"]
+                },
+                "description": "Delete a property"
+              },
+              "response": []
+            },
+            {
+              "name": "Upload Property Images",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "images",
+                      "type": "file",
+                      "src": "/path/to/image1.jpg"
+                    },
+                    {
+                      "key": "images",
+                      "type": "file",
+                      "src": "/path/to/image2.jpg"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/owner/properties/1/images",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "properties", "1", "images"]
+                },
+                "description": "Upload multiple images for a property"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Bookings",
+          "item": [
+            {
+              "name": "Get All Bookings",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/owner/bookings",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "bookings"]
+                },
+                "description": "Get all bookings for owner's properties"
+              },
+              "response": []
+            },
+            {
+              "name": "Accept Booking",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/owner/bookings/1/accept",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "bookings", "1", "accept"]
+                },
+                "description": "Accept a pending booking"
+              },
+              "response": []
+            },
+            {
+              "name": "Reject Booking",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/owner/bookings/1/reject",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "bookings", "1", "reject"]
+                },
+                "description": "Reject a pending booking"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Dashboard",
+          "item": [
+            {
+              "name": "Get Dashboard Stats",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/owner/dashboard/stats",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "owner", "dashboard", "stats"]
+                },
+                "description": "Get dashboard statistics (total properties, bookings, revenue)"
+              },
+              "response": [
+                {
+                  "name": "Success Response",
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"success\": true,\n  \"stats\": {\n    \"totalProperties\": 5,\n    \"totalBookings\": 12,\n    \"pendingBookings\": 3,\n    \"totalRevenue\": \"15000.00\"\n  }\n}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -16,13 +16,30 @@ function Favorites() {
     const fetchFavorites = async () => {
         try {
             setLoading(true);
+            setError('');
             const response = await getFavorites();
+            console.log('Favorites response:', response.data);
             if (response.data.success) {
-                setFavorites(response.data.favorites || []);
+                const favs = response.data.favorites || [];
+                setFavorites(favs);
+                console.log('Favorites loaded:', favs.length, 'properties');
+                if (favs.length === 0) {
+                    console.log('No favorites found - add some properties to favorites!');
+                }
+            } else {
+                setError(response.data.message || 'Failed to load favorites');
             }
         } catch (err) {
-            setError('Failed to load favorites');
-            console.error('Error:', err);
+            console.error('Error fetching favorites:', err);
+            console.error('Error details:', err.response?.data);
+            if (err.response?.status === 401) {
+                // Session expired or not logged in - redirect to login
+                alert('Your session has expired. Please login again.');
+                localStorage.removeItem('user');
+                navigate('/traveler/login');
+            } else {
+                setError(err.response?.data?.message || 'Failed to load favorites. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
@@ -49,7 +66,7 @@ function Favorites() {
                 ← Back to Dashboard
             </button>
 
-            <h2 className="mb-4">My Favorites ❤️</h2>
+            <h2 className="mb-4">My Favorites</h2>
 
             {error && <div className="alert alert-danger">{error}</div>}
 
@@ -69,15 +86,35 @@ function Favorites() {
                 </div>
             ) : (
                 <div className="row g-4">
-                    {favorites.map(property => (
+                    {favorites.map(property => {
+                        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+                        console.log('Property:', property.name, 'Images:', property.images);
+                        const imageUrl = property.images && property.images.length > 0 
+                            ? `${API_URL}${property.images[0]}` 
+                            : null;
+                        console.log('Image URL:', imageUrl);
+                        
+                        return (
                         <div key={property.id} className="col-md-4 col-lg-3">
                             <div className="card h-100 shadow-sm">
+                                {imageUrl ? (
+                                    <img 
+                                        src={imageUrl}
+                                        alt={property.name}
+                                        style={{height: 200, objectFit: 'cover', cursor: 'pointer'}}
+                                        onClick={() => viewProperty(property.id)}
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.nextSibling.style.display = 'flex';
+                                        }}
+                                    />
+                                ) : null}
                                 <div 
                                     className="bg-secondary" 
-                                    style={{height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'}}
+                                    style={{height: 200, display: imageUrl ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'}}
                                     onClick={() => viewProperty(property.id)}
                                 >
-                                    <span style={{fontSize: 48}}>🏠</span>
+                                    <span style={{fontSize: 48}}>No Image</span>
                                 </div>
                                 <div className="card-body">
                                     <div className="d-flex justify-content-between align-items-start mb-2">
@@ -92,7 +129,7 @@ function Favorites() {
                                             ♥
                                         </button>
                                     </div>
-                                    <p className="text-muted small mb-1">📍 {property.location}</p>
+                                    <p className="text-muted small mb-1">Location: {property.location}</p>
                                     <p className="text-muted small mb-2">
                                         {property.type} · {property.bedrooms} bed · {property.bathrooms} bath
                                     </p>
@@ -110,7 +147,8 @@ function Favorites() {
                                 </div>
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 

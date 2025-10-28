@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import ImageUpload from '../../components/owner/ImageUpload';
+import LOCATIONS from '../../utils/locations';
 
 const AddEditProperty = () => {
     const { id } = useParams(); // For edit mode
@@ -133,15 +134,18 @@ const AddEditProperty = () => {
 
                     <div className="col-12 mb-3">
                         <label className="form-label">Location *</label>
-                        <input
-                            type="text"
-                            className="form-control"
+                        <select
+                            className="form-select"
                             name="location"
                             value={formData.location}
                             onChange={handleChange}
-                            placeholder="City, State"
                             required
-                        />
+                        >
+                            <option value="">Select a location</option>
+                            {LOCATIONS.map((loc) => (
+                                <option key={loc} value={loc}>{loc}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="col-12 mb-3">

@@ -216,6 +216,37 @@ const updateProfile = async (req, res) => {
     }
 };
 
+const uploadProfileImage = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'No image file provided' 
+            });
+        }
+
+        const imageUrl = `/uploads/profiles/${req.file.filename}`;
+        const userId = req.session.userId;
+
+        await pool.execute(
+            'UPDATE users SET profile_picture = ? WHERE id = ?',
+            [imageUrl, userId]
+        );
+
+        res.json({ 
+            success: true, 
+            message: 'Profile image uploaded successfully',
+            imageUrl: imageUrl
+        });
+    } catch (error) {
+        console.error('Upload profile image error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error uploading profile image' 
+        });
+    }
+};
+
 // ========== PROPERTIES ==========
 
 const createProperty = async (req, res) => {
@@ -735,6 +766,7 @@ module.exports = {
     // Profile
     getProfile,
     updateProfile,
+    uploadProfileImage,
     
     // Properties
     createProperty,

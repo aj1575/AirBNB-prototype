@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 // Shared Components
 import Navbar from './components/shared/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Traveler Pages
 import TravelerSignup from './pages/traveler/Signup';
@@ -33,21 +34,21 @@ function App() {
                 {/* Traveler Routes */}
                 <Route path="/traveler/signup" element={<TravelerSignup />} />
                 <Route path="/traveler/login" element={<TravelerLogin />} />
-                <Route path="/traveler/dashboard" element={<TravelerDashboard />} />
-                <Route path="/traveler/profile" element={<TravelerProfile />} />
-                <Route path="/traveler/search" element={<PropertySearch />} />
-                <Route path="/traveler/property/:id" element={<PropertyDetails />} />
-                <Route path="/traveler/bookings" element={<MyBookings />} />
-                <Route path="/traveler/favorites" element={<Favorites />} />
+                <Route path="/traveler/dashboard" element={<ProtectedRoute requiredRole="traveler"><TravelerDashboard /></ProtectedRoute>} />
+                <Route path="/traveler/profile" element={<ProtectedRoute requiredRole="traveler"><TravelerProfile /></ProtectedRoute>} />
+                <Route path="/traveler/search" element={<ProtectedRoute requiredRole="traveler"><PropertySearch /></ProtectedRoute>} />
+                <Route path="/traveler/property/:id" element={<ProtectedRoute requiredRole="traveler"><PropertyDetails /></ProtectedRoute>} />
+                <Route path="/traveler/bookings" element={<ProtectedRoute requiredRole="traveler"><MyBookings /></ProtectedRoute>} />
+                <Route path="/traveler/favorites" element={<ProtectedRoute requiredRole="traveler"><Favorites /></ProtectedRoute>} />
 
                 {/* Owner Routes */}
                 <Route path="/owner/signup" element={<OwnerSignup />} />
                 <Route path="/owner/login" element={<OwnerLogin />} />
-                <Route path="/owner/dashboard" element={<OwnerDashboard />} />
-                <Route path="/owner/profile" element={<OwnerProfile />} />
-                <Route path="/owner/properties/new" element={<AddEditProperty />} />
-                <Route path="/owner/properties/edit/:id" element={<AddEditProperty />} />
-                <Route path="/owner/bookings" element={<BookingManagement />} />
+                <Route path="/owner/dashboard" element={<ProtectedRoute requiredRole="owner"><OwnerDashboard /></ProtectedRoute>} />
+                <Route path="/owner/profile" element={<ProtectedRoute requiredRole="owner"><OwnerProfile /></ProtectedRoute>} />
+                <Route path="/owner/properties/new" element={<ProtectedRoute requiredRole="owner"><AddEditProperty /></ProtectedRoute>} />
+                <Route path="/owner/properties/edit/:id" element={<ProtectedRoute requiredRole="owner"><AddEditProperty /></ProtectedRoute>} />
+                <Route path="/owner/bookings" element={<ProtectedRoute requiredRole="owner"><BookingManagement /></ProtectedRoute>} />
             </Routes>
         </BrowserRouter>
     );
@@ -76,34 +77,27 @@ function HomePage() {
                 <div className="row g-4">
                     <div className="col-md-4">
                         <div className="text-center">
-                            <div className="display-4 mb-3">🏠</div>
+                            <div className="display-4 mb-3"><i className="bi bi-house-door"></i></div>
                             <h4>Unique Properties</h4>
                             <p className="text-muted">Find the perfect place for your next adventure</p>
                         </div>
                     </div>
                     <div className="col-md-4">
                         <div className="text-center">
-                            <div className="display-4 mb-3">⭐</div>
+                            <div className="display-4 mb-3"><i className="bi bi-star-fill"></i></div>
                             <h4>Easy Booking</h4>
                             <p className="text-muted">Book your stay in just a few clicks</p>
                         </div>
                     </div>
                     <div className="col-md-4">
                         <div className="text-center">
-                            <div className="display-4 mb-3">🤖</div>
+                            <div className="display-4 mb-3"><i className="bi bi-robot"></i></div>
                             <h4>AI Travel Assistant</h4>
                             <p className="text-muted">Get personalized itineraries for your trip</p>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <footer className="bg-dark text-white py-4 mt-5">
-                <div className="container text-center">
-                    <p className="mb-0">© 2024 Airbnb Clone - CMPE 273 Lab Project</p>
-                    <p className="small text-muted">Built with React, Node.js, Express & MySQL</p>
-                </div>
-            </footer>
         </div>
     );
 }

@@ -111,7 +111,7 @@ function BookingManagement() {
                                             {booking.status}
                                         </span>
                                     </div>
-                                    <p className="text-muted mb-2">📍 {booking.property_location || booking.location}</p>
+                                    <p className="text-muted mb-2">Location: {booking.property_location || booking.location}</p>
                                     <div className="row mb-2">
                                         <div className="col-6">
                                             <small className="text-muted">Check-in</small>

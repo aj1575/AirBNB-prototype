@@ -11,6 +11,7 @@ router.post('/logout', isAuthenticated, ownerController.logout);
 // ========== PROFILE ==========
 router.get('/profile', isAuthenticated, isOwner, ownerController.getProfile);
 router.put('/profile', isAuthenticated, isOwner, ownerController.updateProfile);
+router.post('/profile/image', isAuthenticated, isOwner, ownerController.upload.single('profile_image'), ownerController.uploadProfileImage);
 
 // ========== PROPERTIES ==========
 router.post('/properties', isAuthenticated, isOwner, ownerController.createProperty);

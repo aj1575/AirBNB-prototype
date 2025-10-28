@@ -8,11 +8,12 @@ const AIChatbot = () => {
     const [messages, setMessages] = useState([
         {
             role: 'assistant',
-            content: 'Hi! I\'m your AI travel assistant. I can help you with booking questions, show your current bookings, and answer travel queries. How can I help you today?'
+            content: 'Hello! I\'m your AI Travel Concierge. I can help you with:\n\n• Day-by-day trip itineraries\n• Restaurant recommendations (dietary filters available)\n• Activity suggestions and points of interest\n• Packing lists\n• Your current bookings\n\nJust tell me your plans! Example: "Plan a 3-day trip to San Francisco, vegan, 2 kids"'
         }
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [conversationContext, setConversationContext] = useState({});
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -51,14 +52,21 @@ const AIChatbot = () => {
                     } else {
                         let bookingInfo = `You have ${bookings.length} booking(s):\\n\\n`;
                         bookings.forEach((b, idx) => {
-                            bookingInfo += `${idx + 1}. **${b.property_name}**\\n`;
-                            bookingInfo += `   📍 ${b.location}\\n`;
-                            bookingInfo += `   📅 ${new Date(b.start_date).toLocaleDateString()} - ${new Date(b.end_date).toLocaleDateString()}\\n`;
-                            bookingInfo += `   👥 ${b.guests} guest(s)\\n`;
-                            bookingInfo += `   💰 $${b.total_price}\\n`;
+                            bookingInfo += `${idx + 1}. ${b.property_name}\\n`;
+                            bookingInfo += `   Location: ${b.location}\\n`;
+                            bookingInfo += `   Dates: ${new Date(b.start_date).toLocaleDateString()} - ${new Date(b.end_date).toLocaleDateString()}\\n`;
+                            bookingInfo += `   Guests: ${b.guests}\\n`;
+                            bookingInfo += `   Total: $${b.total_price}\\n`;
                             bookingInfo += `   Status: ${b.status.toUpperCase()}\\n\\n`;
                         });
                         bookingInfo += 'You can view more details in the "My Bookings" page.';
+                        
+                        // Store bookings in context for future reference
+                        setConversationContext({
+                            ...conversationContext,
+                            lastBookings: bookings,
+                            lastAction: 'show_bookings'
+                        });
                         
                         setMessages(prev => [...prev, {
                             role: 'assistant',
@@ -71,10 +79,46 @@ const AIChatbot = () => {
             }
 
             // Otherwise, use AI endpoint
-            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+            
+            // Try to extract location and dates from the message for better context
+            const messageText = input.trim();
+            const booking_context = {};
+            
+            // Check if user is referring to their recent booking
+            if ((userQuery.includes('my booking') || userQuery.includes('that place') || 
+                 userQuery.includes('there') || userQuery.includes('same place') ||
+                 userQuery.includes('recent booking') || userQuery.includes('my reservation') ||
+                 (userQuery.includes('based on') && conversationContext.lastBookings)) && 
+                conversationContext.lastBookings && conversationContext.lastBookings.length > 0) {
+                // Use the most recent booking location
+                const recentBooking = conversationContext.lastBookings[0];
+                booking_context.location = recentBooking.location;
+                booking_context.start_date = recentBooking.start_date;
+                booking_context.end_date = recentBooking.end_date;
+            } else {
+                // Extract location if mentioned (more flexible patterns)
+                const locationMatch = messageText.match(/(?:to|in|for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
+                if (locationMatch) {
+                    booking_context.location = locationMatch[1];
+                }
+                
+                // If user just mentioned a city name after showing bookings, use it
+                if (!booking_context.location && conversationContext.lastBookings) {
+                    const cityMatch = messageText.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/);
+                    if (cityMatch) {
+                        booking_context.location = cityMatch[1];
+                    }
+                }
+            }
+            
             const response = await axios.post(
                 `${API_URL}/api/traveler/ai-concierge`,
-                { message: userQuery },
+                { 
+                    message: messageText,
+                    booking_context: Object.keys(booking_context).length > 0 ? booking_context : undefined,
+                    conversation_history: messages.slice(-4).map(m => ({ role: m.role, content: m.content }))
+                },
                 { withCredentials: true }
             );
 
@@ -85,9 +129,10 @@ const AIChatbot = () => {
             setMessages(prev => [...prev, assistantMessage]);
         } catch (error) {
             console.error('AI chat error:', error);
+            console.error('Error details:', error.response?.data || error.message);
             const errorMessage = {
                 role: 'assistant',
-                content: 'Sorry, I\'m having trouble connecting right now. Please try again later.'
+                content: error.response?.data?.message || 'Sorry, I\'m having trouble connecting right now. Please try again later.'
             };
             setMessages(prev => [...prev, errorMessage]);
         } finally {
@@ -104,9 +149,9 @@ const AIChatbot = () => {
 
     const quickQuestions = [
         'Show my bookings',
-        'How do I book a property?',
-        'Can I modify my booking dates?',
-        'How do I contact the host?'
+        'Plan a 3-day trip to San Francisco, vegan, 2 kids',
+        'Find vegan restaurants in Los Angeles',
+        'What should I pack for a beach vacation?'
     ];
 
     const handleQuickQuestion = (question) => {
@@ -121,7 +166,7 @@ const AIChatbot = () => {
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="AI Assistant"
             >
-                {isOpen ? '✕' : '💬'}
+                {isOpen ? '×' : 'Chat'}
             </button>
 
             {/* Chat Window */}
@@ -129,9 +174,9 @@ const AIChatbot = () => {
                 <div className="ai-chat-window">
                     <div className="ai-chat-header">
                         <div className="d-flex align-items-center">
-                            <div className="ai-avatar">🤖</div>
+                            <div className="ai-avatar">AI</div>
                             <div>
-                                <h6 className="mb-0">AI Travel Assistant</h6>
+                                <h6 className="mb-0">Travel Assistant</h6>
                                 <small className="text-muted">Always here to help</small>
                             </div>
                         </div>
@@ -148,7 +193,7 @@ const AIChatbot = () => {
                                 key={idx}
                                 className={`message ${msg.role === 'user' ? 'user-message' : 'assistant-message'}`}
                             >
-                                {msg.role === 'assistant' && <div className="message-avatar">🤖</div>}
+                                {msg.role === 'assistant' && <div className="message-avatar">AI</div>}
                                 <div className="message-content">
                                     {msg.content}
                                 </div>
@@ -156,7 +201,7 @@ const AIChatbot = () => {
                         ))}
                         {loading && (
                             <div className="message assistant-message">
-                                <div className="message-avatar">🤖</div>
+                                <div className="message-avatar">AI</div>
                                 <div className="message-content">
                                     <div className="typing-indicator">
                                         <span></span>
@@ -201,7 +246,7 @@ const AIChatbot = () => {
                             onClick={handleSend}
                             disabled={loading || !input.trim()}
                         >
-                            {loading ? '...' : '➤'}
+                            {loading ? '...' : 'Send'}
                         </button>
                     </div>
                 </div>

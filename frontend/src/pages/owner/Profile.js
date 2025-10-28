@@ -11,11 +11,15 @@ const OwnerProfile = () => {
         about_me: '',
         languages: '',
         gender: '',
-        location: ''
+        location: '',
+        profile_picture: ''
     });
     const [editing, setEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     useEffect(() => {
         fetchProfile();
@@ -43,6 +47,49 @@ const OwnerProfile = () => {
             ...profile,
             [e.target.name]: e.target.value
         });
+    };
+
+    const handleImageSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image size must be less than 5MB');
+                return;
+            }
+            setSelectedImage(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleImageUpload = async () => {
+        if (!selectedImage) return;
+
+        setUploadingImage(true);
+        const formData = new FormData();
+        formData.append('profile_image', selectedImage);
+
+        try {
+            const response = await axios.post(
+                `${process.env.REACT_APP_API_URL}/api/owner/profile/image`,
+                formData,
+                {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                    withCredentials: true
+                }
+            );
+
+            if (response.data.success) {
+                setProfile({ ...profile, profile_picture: response.data.imageUrl });
+                alert('Profile image updated!');
+                setSelectedImage(null);
+                setImagePreview(null);
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Failed to upload image');
+        } finally {
+            setUploadingImage(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -86,6 +133,59 @@ const OwnerProfile = () => {
                             )}
                         </div>
                         <div className="card-body p-4">
+                            {/* Profile Image Section */}
+                            <div className="text-center mb-4">
+                                <div className="mb-3">
+                                    {imagePreview ? (
+                                        <img 
+                                            src={imagePreview} 
+                                            alt="Preview"
+                                            className="rounded-circle"
+                                            style={{ width: '150px', height: '150px', objectFit: 'cover', border: '3px solid #6a11cb' }}
+                                        />
+                                    ) : profile.profile_picture ? (
+                                        <img 
+                                            src={`${process.env.REACT_APP_API_URL}${profile.profile_picture}`}
+                                            alt="Profile"
+                                            className="rounded-circle"
+                                            style={{ width: '150px', height: '150px', objectFit: 'cover', border: '3px solid #6a11cb' }}
+                                        />
+                                    ) : (
+                                        <div 
+                                            className="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto"
+                                            style={{ width: '150px', height: '150px', border: '3px solid #6a11cb' }}
+                                        >
+                                            <i className="bi bi-person-circle" style={{ fontSize: '80px', color: 'white' }}></i>
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <input
+                                        type="file"
+                                        id="ownerProfileImageInput"
+                                        accept="image/jpeg,image/jpg,image/png"
+                                        onChange={handleImageSelect}
+                                        style={{ display: 'none' }}
+                                    />
+                                    <label htmlFor="ownerProfileImageInput" className="btn btn-outline-primary btn-sm me-2">
+                                        Choose Photo
+                                    </label>
+                                    {selectedImage && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-primary btn-sm"
+                                            onClick={handleImageUpload}
+                                            disabled={uploadingImage}
+                                        >
+                                            {uploadingImage ? 'Uploading...' : 'Upload Photo'}
+                                        </button>
+                                    )}
+                                </div>
+                                <small className="text-muted">JPG, PNG (Max 5MB)</small>
+                            </div>
+
+                            <hr className="my-4" />
+
                             <form onSubmit={handleSubmit}>
                                 <div className="row">
                                     <div className="col-md-6 mb-3">

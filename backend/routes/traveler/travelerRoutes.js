@@ -2,7 +2,40 @@ const express = require('express');
 const router = express.Router();
 const db = require('../../models/db');
 const bcrypt = require('bcrypt');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const { isAuthenticated, isTraveler } = require('../../middleware/auth');
+
+// Multer config for profile images
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '../../uploads/profiles');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type. Only JPEG and PNG allowed.'), false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 }
+});
 
 // ==================== AUTHENTICATION ROUTES ====================
 
@@ -190,6 +223,39 @@ router.put('/profile', isAuthenticated, isTraveler, async (req, res) => {
     }
 });
 
+// Upload Profile Image
+router.post('/profile/image', isAuthenticated, isTraveler, upload.single('profile_image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'No image file provided' 
+            });
+        }
+
+        const imageUrl = `/uploads/profiles/${req.file.filename}`;
+
+        // Update user's profile_picture in database
+        await db.query(
+            'UPDATE users SET profile_picture = ? WHERE id = ?',
+            [imageUrl, req.session.userId]
+        );
+
+        res.json({ 
+            success: true, 
+            message: 'Profile image uploaded successfully',
+            imageUrl: imageUrl
+        });
+
+    } catch (error) {
+        console.error('Upload profile image error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error uploading profile image' 
+        });
+    }
+});
+
 // ==================== PROPERTY SEARCH ROUTES ====================
 
 // Search Properties
@@ -352,8 +418,19 @@ router.get('/bookings', isAuthenticated, isTraveler, async (req, res) => {
         const params = [req.session.userId];
 
         if (status) {
-            query += ' AND b.status = ?';
-            params.push(status);
+            if (status === 'upcoming') {
+                // Upcoming: accepted bookings with end_date >= today
+                query += ' AND b.status = ? AND b.end_date >= CURDATE()';
+                params.push('accepted');
+            } else if (status === 'completed') {
+                // Completed: accepted bookings with end_date < today
+                query += ' AND b.status = ? AND b.end_date < CURDATE()';
+                params.push('accepted');
+            } else {
+                // Regular status filter (pending, cancelled)
+                query += ' AND b.status = ?';
+                params.push(status);
+            }
         }
 
         query += ' ORDER BY b.created_at DESC';
@@ -415,13 +492,32 @@ router.delete('/bookings/:id', isAuthenticated, isTraveler, async (req, res) => 
 // AI Travel Assistant
 router.post('/ai-concierge', isAuthenticated, isTraveler, async (req, res) => {
     try {
-        const { message } = req.body;
+        const { message, booking_context, preferences } = req.body;
 
         if (!message) {
             return res.status(400).json({ 
                 success: false, 
                 message: 'Please provide a message' 
             });
+        }
+
+        // Try Python AI service first (if running on port 5002)
+        const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:5002';
+        console.log(`Attempting to call Python AI service at ${AI_SERVICE_URL}`);
+        try {
+            const axios = require('axios');
+            const aiResponse = await axios.post(
+                `${AI_SERVICE_URL}/api/ai-concierge`,
+                { message, booking_context, preferences },
+                { timeout: 10000 }
+            );
+            
+            console.log('Python AI service responded:', aiResponse.data.type || 'success');
+            if (aiResponse.data && aiResponse.data.success) {
+                return res.json(aiResponse.data);
+            }
+        } catch (aiError) {
+            console.log('Python AI service not available, using fallback:', aiError.message);
         }
 
         // Optional: Try Hugging Face free inference API if HF_API_KEY is set
@@ -545,6 +641,8 @@ router.post('/favorites/:propertyId', isAuthenticated, isTraveler, async (req, r
 // Get Favorites
 router.get('/favorites', isAuthenticated, isTraveler, async (req, res) => {
     try {
+        console.log('Fetching favorites for user:', req.session.userId);
+        
         const [favorites] = await db.query(
             `SELECT p.*, f.created_at as favorited_at 
              FROM favorites f
@@ -554,6 +652,42 @@ router.get('/favorites', isAuthenticated, isTraveler, async (req, res) => {
             [req.session.userId]
         );
 
+        console.log('Found', favorites.length, 'favorites');
+
+        // Fetch images for each property
+        for (let property of favorites) {
+            try {
+                // First check if property has images field (some properties store as JSON)
+                if (property.images && typeof property.images === 'string') {
+                    try {
+                        property.images = JSON.parse(property.images);
+                        console.log('Property', property.id, 'parsed images from JSON:', property.images);
+                    } catch (e) {
+                        property.images = [];
+                    }
+                } else {
+                    // Fetch from property_images table
+                    const [images] = await db.query(
+                        'SELECT image_path FROM property_images WHERE property_id = ? ORDER BY display_order',
+                        [property.id]
+                    );
+                    property.images = images.map(img => img.image_path);
+                    console.log('Property', property.id, 'fetched', images.length, 'images from table');
+                }
+                
+                // If still no images, set empty array
+                if (!property.images || property.images.length === 0) {
+                    console.log('Property', property.id, 'has NO images');
+                    property.images = [];
+                }
+            } catch (imgError) {
+                console.error('Error fetching images for property', property.id, ':', imgError);
+                property.images = []; // Set empty array if image fetch fails
+            }
+        }
+
+        console.log('Sending', favorites.length, 'favorites with images');
+        
         res.json({ 
             success: true, 
             favorites 
@@ -561,9 +695,10 @@ router.get('/favorites', isAuthenticated, isTraveler, async (req, res) => {
 
     } catch (error) {
         console.error('Get favorites error:', error);
+        console.error('Error stack:', error.stack);
         res.status(500).json({ 
             success: false, 
-            message: 'Error fetching favorites' 
+            message: 'Error fetching favorites: ' + error.message 
         });
     }
 });

@@ -19,6 +19,7 @@ function PropertyDetails() {
 
     useEffect(() => {
         fetchProperty();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const fetchProperty = async () => {
@@ -27,19 +28,26 @@ function PropertyDetails() {
             if (response.data.success) {
                 setProperty(response.data.property);
             }
-            // Also fetch favorites to determine if this property is favorited
-            try {
-                const favRes = await getFavorites();
-                if (favRes.data?.success && Array.isArray(favRes.data.favorites)) {
-                    const exists = favRes.data.favorites.some(p => String(p.id) === String(id));
-                    setIsFavorite(exists);
-                }
-            } catch (_) { /* ignore favorites fetch failure */ }
+            // Check if this property is in favorites
+            checkIfFavorite();
         } catch (err) {
             setError('Failed to load property details');
             console.error('Error:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const checkIfFavorite = async () => {
+        try {
+            const favRes = await getFavorites();
+            if (favRes.data?.success && Array.isArray(favRes.data.favorites)) {
+                const exists = favRes.data.favorites.some(p => String(p.id) === String(id));
+                console.log('Is property favorited?', exists, 'Property ID:', id);
+                setIsFavorite(exists);
+            }
+        } catch (err) {
+            console.log('Could not check favorites:', err.message);
         }
     };
 
@@ -84,13 +92,26 @@ function PropertyDetails() {
         setFavLoading(true);
         try {
             if (isFavorite) {
-                await removeFavorite(property.id);
-                setIsFavorite(false);
+                console.log('Removing from favorites:', property.id);
+                const response = await removeFavorite(property.id);
+                console.log('Remove favorite response:', response.data);
+                if (response.data.success) {
+                    setIsFavorite(false);
+                    alert('Removed from favorites!');
+                }
             } else {
-                await addFavorite(property.id);
-                setIsFavorite(true);
+                console.log('Adding to favorites:', property.id);
+                const response = await addFavorite(property.id);
+                console.log('Add favorite response:', response.data);
+                if (response.data.success) {
+                    setIsFavorite(true);
+                    alert('Added to favorites! Check "My Favorites" page.');
+                    // Re-check favorites to ensure state is correct
+                    setTimeout(() => checkIfFavorite(), 500);
+                }
             }
         } catch (err) {
+            console.error('Favorite error:', err);
             alert(err.response?.data?.message || 'Failed to update favorite');
         } finally {
             setFavLoading(false);
@@ -118,18 +139,54 @@ function PropertyDetails() {
         );
     }
 
+    const propertyImages = property.photos ? property.photos.split(',') : [];
+    const firstImage = propertyImages[0];
+    const imageUrl = firstImage ? `${process.env.REACT_APP_API_URL}${firstImage}` : null;
+
     return (
         <div className="container mt-4 mb-5">
-            <button onClick={() => navigate('/traveler/search')} className="btn btn-outline-secondary mb-3">
-                ← Back to Search
+            <button onClick={() => navigate('/traveler/dashboard')} className="btn btn-outline-secondary mb-3">
+                ← Back to Dashboard
             </button>
 
             <div className="row">
                 <div className="col-md-8">
-                    {/* Property Image */}
-                    <div className="bg-secondary rounded mb-4" style={{ height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span className="display-1">🏠</span>
-                    </div>
+                    {/* Property Images */}
+                    {imageUrl ? (
+                        <div className="mb-4">
+                            <img 
+                                src={imageUrl} 
+                                alt={property.name}
+                                className="w-100 rounded"
+                                style={{ height: '400px', objectFit: 'cover' }}
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                }}
+                            />
+                            <div className="bg-secondary rounded" style={{ height: '400px', display: 'none', alignItems: 'center', justifyContent: 'center' }}>
+                                <span className="display-1">No Image</span>
+                            </div>
+                            {propertyImages.length > 1 && (
+                                <div className="row g-2 mt-2">
+                                    {propertyImages.slice(1, 5).map((img, idx) => (
+                                        <div key={idx} className="col-3">
+                                            <img 
+                                                src={`${process.env.REACT_APP_API_URL}${img}`}
+                                                alt={`${property.name} ${idx + 2}`}
+                                                className="w-100 rounded"
+                                                style={{ height: '100px', objectFit: 'cover' }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="bg-secondary rounded mb-4" style={{ height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span className="display-1">No Image</span>
+                        </div>
+                    )}
 
                     {/* Property Info */}
                     <div className="card shadow-sm mb-4">
@@ -147,7 +204,7 @@ function PropertyDetails() {
                                 </button>
                             </div>
                             <p className="text-muted mb-3">
-                                📍 {property.location}
+                                Location: {property.location}
                             </p>
 
                             <div className="row mb-3">
