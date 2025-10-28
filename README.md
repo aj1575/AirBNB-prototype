@@ -1,4 +1,4 @@
-# Airbnb Prototype - CMPE 273 Lab 1
+# Airbnb Prototype - Lab 1
 
 A full-stack Airbnb clone with AI-powered travel concierge built using React, Node.js, Express, MySQL, and Python.
 
