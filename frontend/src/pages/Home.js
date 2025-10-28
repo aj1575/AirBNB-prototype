@@ -5,7 +5,7 @@ function Home() {
     return (
         <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
             <div className="container text-center">
-                <h1 className="display-3 fw-bold mb-4">Welcome to Airbnb Clone</h1>
+                <h1 className="display-3 fw-bold mb-4">Welcome to Airbnb</h1>
                 <p className="lead mb-5">Find your perfect stay or host your property</p>
                 
                 <div className="row justify-content-center">

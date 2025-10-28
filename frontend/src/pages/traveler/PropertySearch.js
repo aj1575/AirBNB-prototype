@@ -152,7 +152,7 @@ function PropertySearch() {
                                             className="card-img-top bg-secondary d-flex align-items-center justify-content-center"
                                             style={{ height: '200px' }}
                                         >
-                                            <span className="text-white display-4">🏠</span>
+                                            <span className="text-white display-4"></span>
                                         </div>
                                         <div className="card-body">
                                             <h5 className="card-title">{property.name}</h5>

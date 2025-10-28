@@ -6,7 +6,7 @@ const Home = () => {
         <div className="container">
             <div className="row min-vh-100 align-items-center">
                 <div className="col-12 text-center">
-                    <h1 className="display-3 mb-4">🏠 Welcome to Airbnb Prototype</h1>
+                    <h1 className="display-3 mb-4">Welcome to Airbnb </h1>
                     <p className="lead mb-5">CMPE 273 - Lab 1 Project</p>
                     
                     <div className="row justify-content-center">
@@ -26,7 +26,7 @@ const Home = () => {
                                             Traveler Login
                                         </Link>
                                         <Link to="/traveler/signup" className="btn btn-outline-primary">
-                                            Sign Up as Traveler
+                                            Traveler
                                         </Link>
                                     </div>
                                 </div>
@@ -38,7 +38,7 @@ const Home = () => {
                             <div className="card shadow-lg h-100">
                                 <div className="card-body d-flex flex-column justify-content-center p-5">
                                     <div className="mb-4">
-                                        <i className="bi bi-house-door" style={{ fontSize: '4rem', color: '#198754' }}></i>
+                                        <i className="bi bi-house-door" style={{ fontSize: '4rem', color: '#f5f7f6ff' }}></i>
                                     </div>
                                     <h2 className="card-title mb-3">I'm an Owner</h2>
                                     <p className="card-text text-muted mb-4">
@@ -59,7 +59,7 @@ const Home = () => {
                     
                     <div className="mt-5 text-muted">
                         <p>Team: Yuktaa (Traveler Side) & Anurag (Owner Side)</p>
-                        <p>Course: CMPE 273 | Due: October 20, 2025</p>
+                       
                     </div>
                 </div>
             </div>

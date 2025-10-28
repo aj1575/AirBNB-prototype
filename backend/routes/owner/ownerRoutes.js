@@ -11,6 +11,8 @@ router.post('/logout', isAuthenticated, ownerController.logout);
 // ========== PROFILE ==========
 router.get('/profile', isAuthenticated, isOwner, ownerController.getProfile);
 router.put('/profile', isAuthenticated, isOwner, ownerController.updateProfile);
+router.post('/profile/picture',isAuthenticated,isOwner,ownerController.profileUpload.single('profilePicture'),ownerController.uploadProfilePicture);
+router.delete('/profile/picture', isAuthenticated,isOwner,ownerController.deleteProfilePicture);
 
 // ========== PROPERTIES ==========
 router.post('/properties', isAuthenticated, isOwner, ownerController.createProperty);

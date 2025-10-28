@@ -5,12 +5,29 @@ import axios from 'axios';
 const OwnerDashboard = () => {
     const [properties, setProperties] = useState([]);
     const [stats, setStats] = useState(null);
+    const [ownerProfile, setOwnerProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchDashboardData();
         fetchProperties();
+        fetchOwnerProfile();
     }, []);
+
+    const fetchOwnerProfile = async () => {
+        try {
+            const response = await axios.get(
+                `${process.env.REACT_APP_API_URL}/api/owner/profile`,
+                { withCredentials: true }
+            );
+
+            if (response.data.success) {
+                setOwnerProfile(response.data.user);
+            }
+        } catch (error) {
+            console.error('Profile error:', error);
+        }
+    };
 
     const fetchDashboardData = async () => {
         try {
@@ -57,7 +74,7 @@ const OwnerDashboard = () => {
 
             if (response.data.success) {
                 alert('Property deleted successfully');
-                fetchProperties(); // Refresh list
+                fetchProperties();
             }
         } catch (error) {
             alert(error.response?.data?.message || 'Failed to delete property');
@@ -69,11 +86,43 @@ const OwnerDashboard = () => {
 
     return (
         <div className="container mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>Owner Dashboard</h2>
-                <Link to="/owner/properties/new" className="btn btn-primary">
-                    + Add New Property
-                </Link>
+            {/* Welcome Section with Profile Picture - ONLY NEW ADDITION */}
+            <div className="d-flex align-items-center mb-4">
+                {ownerProfile?.profile_picture ? (
+                    <img
+                        src={`${process.env.REACT_APP_API_URL}${ownerProfile.profile_picture}`}
+                        alt="Profile"
+                        className="rounded-circle me-3"
+                        style={{ 
+                            width: '60px', 
+                            height: '60px', 
+                            objectFit: 'cover',
+                            border: '3px solid #0d6efd'
+                        }}
+                        onError={(e) => {
+                            e.target.style.display = 'none';
+                        }}
+                    />
+                ) : (
+                    <div 
+                        className="rounded-circle bg-primary text-white me-3 d-flex align-items-center justify-content-center"
+                        style={{ 
+                            width: '60px', 
+                            height: '60px',
+                            border: '3px solid #0d6efd'
+                        }}
+                    >
+                        <span className="fs-4 fw-bold">
+                            {ownerProfile?.name?.charAt(0).toUpperCase() || 'O'}
+                        </span>
+                    </div>
+                )}
+                <div className="d-flex justify-content-between align-items-center flex-grow-1">
+                    <h2>Owner Dashboard</h2>
+                    <Link to="/owner/properties/new" className="btn btn-primary">
+                        + Add New Property
+                    </Link>
+                </div>
             </div>
 
             {/* Stats Cards */}
@@ -121,9 +170,6 @@ const OwnerDashboard = () => {
             <div className="card mb-4">
                 <div className="card-header d-flex justify-content-between align-items-center">
                     <h5 className="mb-0">Your Properties</h5>
-                    <Link to="/owner/properties/new" className="btn btn-sm btn-primary">
-                        + Add New
-                    </Link>
                 </div>
                 <div className="card-body">
                     {properties.length === 0 ? (

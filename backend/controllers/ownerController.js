@@ -503,7 +503,141 @@ const deletePropertyImage = async (req, res) => {
         });
     }
 };
+// ==================== PROFILE PICTURE UPLOAD ====================
 
+// Configure multer for profile pictures
+const profileStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '../uploads/profiles');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = `profile-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+    }
+});
+
+const profileFileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type. Only JPEG, PNG and WebP allowed.'), false);
+    }
+};
+
+const profileUpload = multer({
+    storage: profileStorage,
+    fileFilter: profileFileFilter,
+    limits: { fileSize: 2 * 1024 * 1024 } // 2MB limit for profile pictures
+});
+
+// Upload profile picture
+const uploadProfilePicture = async (req, res) => {
+    try {
+        const ownerId = req.session.userId;
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'No image uploaded'
+            });
+        }
+
+        console.log('Profile picture uploaded:', req.file.filename);
+
+        // Get old profile picture
+        const [user] = await pool.execute(
+            'SELECT profile_picture FROM users WHERE id = ?',
+            [ownerId]
+        );
+
+        const oldPicture = user[0]?.profile_picture;
+
+        // Create URL for uploaded image
+        const imageUrl = `/uploads/profiles/${req.file.filename}`;
+
+        // Update database
+        await pool.execute(
+            'UPDATE users SET profile_picture = ? WHERE id = ?',
+            [imageUrl, ownerId]
+        );
+
+        // Delete old profile picture if exists
+        if (oldPicture && oldPicture.includes('/uploads/profiles/')) {
+            const oldFilePath = path.join(__dirname, '..', oldPicture);
+            if (fs.existsSync(oldFilePath)) {
+                fs.unlinkSync(oldFilePath);
+                console.log('Old profile picture deleted:', oldFilePath);
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Profile picture uploaded successfully',
+            profilePicture: imageUrl
+        });
+    } catch (error) {
+        console.error('Upload profile picture error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to upload profile picture',
+            error: error.message
+        });
+    }
+};
+
+// Delete profile picture
+const deleteProfilePicture = async (req, res) => {
+    try {
+        const ownerId = req.session.userId;
+
+        // Get current profile picture
+        const [user] = await pool.execute(
+            'SELECT profile_picture FROM users WHERE id = ?',
+            [ownerId]
+        );
+
+        const profilePicture = user[0]?.profile_picture;
+
+        if (!profilePicture) {
+            return res.status(400).json({
+                success: false,
+                message: 'No profile picture to delete'
+            });
+        }
+
+        // Update database
+        await pool.execute(
+            'UPDATE users SET profile_picture = NULL WHERE id = ?',
+            [ownerId]
+        );
+
+        // Delete physical file
+        if (profilePicture.includes('/uploads/profiles/')) {
+            const filePath = path.join(__dirname, '..', profilePicture);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log('Profile picture deleted:', filePath);
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Profile picture deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete profile picture error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete profile picture',
+            error: error.message
+        });
+    }
+};
 // ========== BOOKINGS ==========
 
 const getBookingRequests = async (req, res) => {
@@ -735,7 +869,9 @@ module.exports = {
     // Profile
     getProfile,
     updateProfile,
-    
+    profileUpload,             
+    uploadProfilePicture,      
+    deleteProfilePicture,
     // Properties
     createProperty,
     getOwnerProperties,
@@ -755,4 +891,6 @@ module.exports = {
     
     // Dashboard
     getDashboardStats
-};
+
+     
+};   

@@ -11,3 +11,135 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+/* Property card hover effect */
+.hover-shadow {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Image loading state */
+.card-img-top {
+    background-color: #f0f0f0;
+}
+.menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-button {
+  background: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 10px;
+  color: #0d6efd;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 36px;
+  background-color: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  min-width: 140px;
+  z-index: 10;
+}
+
+.menu-container:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 10px 14px;
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+.dropdown-menu {
+  min-width: 180px;
+}
+
+.dropdown-menu .border {
+  border-color: #e0e0e0 !important;
+}
+/* Navbar improvements */
+.navbar-toggler {
+    border: none;
+    padding: 0.5rem;
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+    outline: 2px solid #FF385C;
+}
+
+.navbar-collapse {
+    transition: height 0.3s ease;
+}
+
+/* Profile picture hover effect */
+.navbar .rounded-circle {
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.navbar .rounded-circle:hover {
+    transform: scale(1.05);
+}
+
+/* Dropdown improvements */
+.dropdown-menu {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: none;
+    margin-top: 0.5rem;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1.5rem;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-item i {
+    width: 20px;
+}
+
+/* Mobile responsive navbar */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        background-color: white;
+        padding: 1rem;
+        margin-top: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dropdown-menu {
+        border: none;
+        box-shadow: none;
+        padding-left: 1rem;
+    }
+    
+    .nav-item {
+        padding: 0.5rem 0;
+    }
+    
+    .navbar-brand span {
+        font-size: 28px !important;
+    }
+}
