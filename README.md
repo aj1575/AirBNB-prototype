@@ -2,33 +2,37 @@
 
 A full-stack Airbnb clone with AI-powered travel concierge built using React, Node.js, Express, MySQL, and Python.
 
-## 🚀 Features
+---
+
+## Features
 
 ### Traveler Features
-- ✅ Signup/Login with session authentication
-- ✅ Profile management with image upload
-- ✅ Property search by location, dates, guests
-- ✅ Property details and booking
-- ✅ Favorites management
-- ✅ Booking history (Pending, Accepted, Cancelled)
-- ✅ AI Travel Concierge (day-by-day itineraries, restaurant recommendations)
+- Signup/Login with session authentication
+- Profile management with image upload
+- Property search by location, dates, guests
+- Property details and booking
+- Favorites management
+- Booking history (Pending, Accepted, Cancelled)
+- AI Travel Concierge (day-by-day itineraries, restaurant recommendations)
 
 ### Owner Features
-- ✅ Signup/Login with session authentication
-- ✅ Profile management with image upload
-- ✅ Property posting with images
-- ✅ Booking management (Accept/Reject)
-- ✅ Dashboard with statistics
+- Signup/Login with session authentication
+- Profile management with image upload
+- Property posting with images
+- Booking management (Accept/Reject)
+- Dashboard with statistics
 
 ### AI Agent Features (Python + Tavily API)
-- ✅ Natural language understanding
-- ✅ Day-by-day trip planning
-- ✅ Restaurant recommendations (dietary filters)
-- ✅ Activity suggestions
-- ✅ Packing checklist (weather-aware)
-- ✅ Real-time web search integration
+- Natural language understanding
+- Day-by-day trip planning
+- Restaurant recommendations (dietary filters)
+- Activity suggestions
+- Packing checklist (weather-aware)
+- Real-time web search integration
 
-## 🛠️ Tech Stack
+---
+
+## Tech Stack
 
 **Frontend:**
 - React 18
@@ -48,14 +52,18 @@ A full-stack Airbnb clone with AI-powered travel concierge built using React, No
 - Tavily API (web search)
 - Natural Language Processing
 
-## 📋 Prerequisites
+---
+
+## Prerequisites
 
 - Node.js (v14+)
 - Python 3.8+
 - MySQL 8.0+
 - npm or yarn
 
-## 🔧 Installation
+---
+
+## Installation
 
 ### 1. Clone Repository
 ```bash
@@ -94,7 +102,9 @@ pip3 install -r requirements.txt
 python3 ai_concierge.py
 ```
 
-## 🌐 Running the Application
+---
+
+## Running the Application
 
 **Backend:** http://localhost:5001
 **Frontend:** http://localhost:3000
@@ -110,7 +120,9 @@ python3 ai_concierge.py
 - Email: a@gmail.com
 - Password: 123456
 
-## 📚 API Documentation
+---
+
+## API Documentation
 
 ### Postman Collection
 Import `POSTMAN_COLLECTION.json` into Postman for complete API documentation.
@@ -121,26 +133,30 @@ Import `POSTMAN_COLLECTION.json` into Postman for complete API documentation.
 
 See `POSTMAN_SETUP_GUIDE.md` for detailed testing instructions.
 
-## 🎯 Non-Functional Requirements
+---
+
+## Non-Functional Requirements
 
 ### Responsiveness
-✅ Mobile (375px - 767px)
-✅ Tablet (768px - 1024px)
-✅ Desktop (1025px+)
+- Mobile (375px - 767px)
+- Tablet (768px - 1024px)
+- Desktop (1025px+)
 
 ### Accessibility
-✅ Semantic HTML5
-✅ ARIA labels
-✅ Keyboard navigation
-✅ Alt text on images
+- Semantic HTML5
+- ARIA labels
+- Keyboard navigation
+- Alt text on images
 
 ### Scalability
-✅ Database indexing
-✅ Query optimization
-✅ Connection pooling
-✅ < 300ms API response time
+- Database indexing
+- Query optimization
+- Connection pooling
+- Average API response time under 300ms
 
-## 📁 Project Structure
+---
+
+## Project Structure
 
 ```
 AirBNB-prototype/
@@ -164,7 +180,9 @@ AirBNB-prototype/
 └── README.md
 ```
 
-## 🧪 Testing
+---
+
+## Testing
 
 ### Using Postman
 1. Import `POSTMAN_COLLECTION.json`
@@ -184,7 +202,9 @@ AirBNB-prototype/
 6. Login as owner
 7. Manage bookings
 
-## 📊 Key Features Implemented
+---
+
+## Key Features Implemented
 
 - [x] Session-based authentication
 - [x] Profile management with image upload
@@ -197,7 +217,9 @@ AirBNB-prototype/
 - [x] Optimized database queries
 - [x] API documentation (Postman)
 
-## 🔒 Security
+---
+
+## Security
 
 - Password hashing with bcrypt
 - Session-based authentication
@@ -206,19 +228,25 @@ AirBNB-prototype/
 - File upload validation
 - Role-based access control
 
-## 📝 Submission Files
+---
+
+## Submission Files
 
 1. **POSTMAN_COLLECTION.json** - Complete API documentation
 2. **POSTMAN_SETUP_GUIDE.md** - Testing instructions
 3. **NON_FUNCTIONAL_REQUIREMENTS.md** - Requirements documentation
 4. **README.md** - This file
 
-## 👥 Authors
+---
+
+## Authors
 
 - Student Name
 - SJSU ID
 - Email
 
-## 📄 License
+---
+
+## License
 
 This project is for educational purposes (CMPE 273 Lab Assignment).
