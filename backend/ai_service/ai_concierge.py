@@ -76,28 +76,37 @@ def get_activity_recommendations(location: str, preferences: Dict) -> List[Dict]
     activities = []
     
     # Use Tavily to search for real activities
-    search_queries = [
-        f"top attractions in {location}",
-        f"family friendly activities {location}" if preferences.get('has_kids') else f"things to do {location}",
-    ]
+    query = f"top 10 things to do in {location} attractions 2024"
+    if preferences.get('has_kids'):
+        query = f"family friendly activities and attractions in {location}"
     
-    if preferences.get('interests'):
-        for interest in preferences['interests']:
-            search_queries.append(f"{interest} activities in {location}")
+    results = search_tavily(query, max_results=5)
     
-    for query in search_queries[:2]:  # Limit searches
-        results = search_tavily(query, max_results=3)
-        for result in results:
-            activities.append({
-                'title': result.get('title', 'Activity'),
-                'description': result.get('content', '')[:200],
-                'url': result.get('url', ''),
-                'price_tier': '$$',  # Default
-                'duration': '2-3 hours',
-                'tags': ['popular', 'recommended'],
-                'wheelchair_friendly': True,
-                'child_friendly': preferences.get('has_kids', False)
-            })
+    for result in results:
+        title = result.get('title', 'Activity')
+        content = result.get('content', '')
+        
+        # Clean up title (remove site names, numbers)
+        clean_title = title.split('|')[0].split('-')[0].strip()
+        # Remove leading numbers like "1. " or "15 "
+        import re
+        clean_title = re.sub(r'^\d+[\.\)]\s*', '', clean_title)
+        clean_title = re.sub(r'^THE\s+\d+\s+BEST\s+', '', clean_title, flags=re.IGNORECASE)
+        
+        # Clean description
+        description = content[:150].strip()
+        description = description.split('http')[0].strip()
+        
+        activities.append({
+            'title': clean_title[:80],  # Limit length
+            'description': description,
+            'url': result.get('url', ''),
+            'price_tier': '$$',
+            'duration': '2-3 hours',
+            'tags': ['popular', 'recommended'],
+            'wheelchair_friendly': True,
+            'child_friendly': preferences.get('has_kids', False)
+        })
     
     # Fallback generic activities if Tavily fails
     if not activities:
@@ -129,15 +138,29 @@ def get_restaurant_recommendations(location: str, dietary_needs: List[str]) -> L
     restaurants = []
     
     # Build search query
-    dietary_str = ', '.join(dietary_needs) if dietary_needs else 'restaurants'
-    query = f"best {dietary_str} restaurants in {location}"
+    dietary_str = ', '.join(dietary_needs) if dietary_needs else 'best'
+    query = f"{dietary_str} restaurants in {location} 2024"
     
     results = search_tavily(query, max_results=5)
     
     for result in results:
+        title = result.get('title', 'Restaurant')
+        content = result.get('content', '')
+        
+        # Extract restaurant name from title (remove site names)
+        name = title.split('|')[0].split('-')[0].strip()
+        if len(name) > 50:
+            name = name[:50]
+        
+        # Clean up description
+        description = content[:200].strip()
+        if description:
+            # Remove URLs and clean up
+            description = description.split('http')[0].strip()
+        
         restaurants.append({
-            'name': result.get('title', 'Restaurant'),
-            'description': result.get('content', '')[:150],
+            'name': name,
+            'description': description,
             'dietary_options': dietary_needs,
             'price_tier': '$$',
             'cuisine': 'Various',
@@ -249,13 +272,21 @@ def ai_concierge():
         elif 'restaurant' in message or 'food' in message or 'eat' in message or 'dining' in message:
             # Restaurant recommendations
             restaurants = get_restaurant_recommendations(location or 'the area', dietary_needs)
-            response_text = f"Restaurant Recommendations in {location or 'the area'}:\n\n"
+            
+            # Format response nicely
+            dietary_text = f" ({', '.join(dietary_needs)})" if dietary_needs else ""
+            response_text = f"🍽️ Restaurant Recommendations in {location or 'the area'}{dietary_text}\n\n"
+            
             for i, rest in enumerate(restaurants, 1):
-                response_text += f"{i}. {rest['name']} ({rest['price_tier']})\n"
-                response_text += f"   {rest['description']}\n"
+                response_text += f"{i}. **{rest['name']}**\n"
+                response_text += f"   Price: {rest['price_tier']}\n"
+                if rest.get('description'):
+                    response_text += f"   {rest['description']}\n"
                 if rest.get('dietary_options'):
-                    response_text += f"   Options: {', '.join(rest['dietary_options'])}\n"
+                    response_text += f"   ✓ {', '.join(rest['dietary_options'])} options available\n"
                 response_text += "\n"
+            
+            response_text += "\n💡 Tip: Check reviews and make reservations in advance for popular spots!"
             
             return jsonify({
                 'success': True,
@@ -304,22 +335,48 @@ def ai_concierge():
             restaurants = get_restaurant_recommendations(location, dietary_needs)
             packing_list = generate_packing_list(location, (start_date, end_date))
             
-            # Format response
-            response_text = f"{num_days}-Day Itinerary for {location}\n\n"
+            # Format response beautifully
+            response_text = f"✈️ **{num_days}-Day Itinerary for {location}**\n\n"
             
             for plan in daily_plans:
-                response_text += f"Day {plan['day']} - {plan['date']}\n"
-                response_text += f"Morning: {plan['morning']['activity']['title']}\n"
-                response_text += f"Afternoon: {plan['afternoon']['activity']['title']}\n"
-                response_text += f"Evening: {plan['evening']['activity']['title']}\n\n"
+                response_text += f"📅 **Day {plan['day']}** - {plan['date']}\n\n"
+                response_text += f"🌅 **Morning** ({plan['morning']['time']})\n"
+                response_text += f"   {plan['morning']['activity']['title']}\n"
+                if plan['morning']['activity'].get('description'):
+                    response_text += f"   {plan['morning']['activity']['description'][:100]}...\n"
+                response_text += f"   💡 {plan['morning']['notes']}\n\n"
+                
+                response_text += f"☀️ **Afternoon** ({plan['afternoon']['time']})\n"
+                response_text += f"   {plan['afternoon']['activity']['title']}\n"
+                if plan['afternoon']['activity'].get('description'):
+                    response_text += f"   {plan['afternoon']['activity']['description'][:100]}...\n"
+                response_text += f"   💡 {plan['afternoon']['notes']}\n\n"
+                
+                response_text += f"🌆 **Evening** ({plan['evening']['time']})\n"
+                response_text += f"   {plan['evening']['activity']['title']}\n"
+                if plan['evening']['activity'].get('description'):
+                    response_text += f"   {plan['evening']['activity']['description'][:100]}...\n"
+                response_text += f"   💡 {plan['evening']['notes']}\n\n"
+                response_text += "---\n\n"
             
-            response_text += f"\nTop Activities:\n"
+            response_text += f"🎯 **Top Recommended Activities:**\n\n"
             for i, act in enumerate(activities[:3], 1):
-                response_text += f"{i}. {act['title']} ({act['price_tier']}, {act['duration']})\n"
+                response_text += f"{i}. **{act['title']}**\n"
+                response_text += f"   Duration: {act['duration']} | Price: {act['price_tier']}\n"
+                if act.get('description'):
+                    response_text += f"   {act['description'][:100]}...\n"
+                response_text += "\n"
             
-            response_text += f"\nRestaurant Recommendations:\n"
+            response_text += f"\n🍽️ **Where to Eat:**\n\n"
             for i, rest in enumerate(restaurants[:3], 1):
-                response_text += f"{i}. {rest['name']} ({rest['price_tier']})\n"
+                response_text += f"{i}. **{rest['name']}** ({rest['price_tier']})\n"
+                if rest.get('description'):
+                    response_text += f"   {rest['description'][:100]}...\n"
+                response_text += "\n"
+            
+            response_text += "\n💼 **Don't Forget to Pack:**\n"
+            response_text += ", ".join(packing_list[:5]) + ", and more!\n"
+            response_text += "\n✨ Have an amazing trip!"
             
             return jsonify({
                 'success': True,
