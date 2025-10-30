@@ -72,114 +72,128 @@ def generate_packing_list(location: str, dates: tuple, weather: str = None) -> L
     return base_items
 
 def get_activity_recommendations(location: str, preferences: Dict) -> List[Dict]:
-    """Get activity recommendations based on preferences"""
+    """Get activity recommendations based on preferences - returns only 2 specific places"""
     activities = []
     
-    # Use Tavily to search for real activities
-    query = f"top 10 things to do in {location} attractions 2024"
-    if preferences.get('has_kids'):
-        query = f"family friendly activities and attractions in {location}"
+    # Check for specific requests (beach, museum, etc.)
+    specific_interest = preferences.get('specific_interest', '')
     
-    results = search_tavily(query, max_results=5)
+    if specific_interest:
+        query = f"{specific_interest} in {location}"
+    else:
+        query = f"must visit places in {location} 2024"
+    
+    results = search_tavily(query, max_results=2)  # Only get 2 results
     
     for result in results:
         title = result.get('title', 'Activity')
         content = result.get('content', '')
         
-        # Clean up title (remove site names, numbers)
-        clean_title = title.split('|')[0].split('-')[0].strip()
-        # Remove leading numbers like "1. " or "15 "
+        # Extract actual place names from content
         import re
-        clean_title = re.sub(r'^\d+[\.\)]\s*', '', clean_title)
-        clean_title = re.sub(r'^THE\s+\d+\s+BEST\s+', '', clean_title, flags=re.IGNORECASE)
+        # Try to find specific place names (capitalized words)
+        places = re.findall(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Park|Beach|Museum|Bridge|Tower|Center|Island|Market|Square|Garden)))', content)
         
-        # Clean description
-        description = content[:150].strip()
-        description = description.split('http')[0].strip()
+        if places:
+            clean_title = places[0]
+        else:
+            # Clean up title
+            clean_title = title.split('|')[0].split('-')[0].strip()
+            clean_title = re.sub(r'^\d+[\.\)]\s*', '', clean_title)
+            clean_title = re.sub(r'^THE\s+\d+\s+BEST\s+', '', clean_title, flags=re.IGNORECASE)
+            clean_title = clean_title[:60]
+        
+        # Get first sentence of description
+        sentences = content.split('.')
+        description = sentences[0].strip() if sentences else content[:100]
         
         activities.append({
-            'title': clean_title[:80],  # Limit length
+            'title': clean_title,
             'description': description,
             'url': result.get('url', ''),
             'price_tier': '$$',
-            'duration': '2-3 hours',
-            'tags': ['popular', 'recommended'],
-            'wheelchair_friendly': True,
-            'child_friendly': preferences.get('has_kids', False)
+            'duration': '2-3 hours'
         })
     
-    # Fallback generic activities if Tavily fails
+    # Fallback if no results
     if not activities:
         activities = [
             {
-                'title': f'Explore {location} Downtown',
-                'description': 'Walk through the historic downtown area and discover local shops and cafes.',
+                'title': f'{location} Downtown',
+                'description': 'Explore the historic downtown area',
                 'price_tier': '$',
-                'duration': '2-3 hours',
-                'tags': ['walking', 'culture'],
-                'wheelchair_friendly': True,
-                'child_friendly': True
+                'duration': '2-3 hours'
             },
             {
-                'title': f'{location} Museum Tour',
-                'description': 'Visit local museums and learn about the area\'s history and culture.',
-                'price_tier': '$$',
-                'duration': '3-4 hours',
-                'tags': ['culture', 'indoor'],
-                'wheelchair_friendly': True,
-                'child_friendly': True
+                'title': f'{location} Waterfront',
+                'description': 'Visit the scenic waterfront area',
+                'price_tier': '$',
+                'duration': '2-3 hours'
             }
         ]
     
-    return activities[:5]  # Limit to 5 activities
+    return activities[:2]  # Return exactly 2 activities
 
 def get_restaurant_recommendations(location: str, dietary_needs: List[str]) -> List[Dict]:
-    """Get restaurant recommendations filtered by dietary needs"""
+    """Get restaurant recommendations - returns only 2 specific restaurants"""
     restaurants = []
     
     # Build search query
-    dietary_str = ', '.join(dietary_needs) if dietary_needs else 'best'
-    query = f"{dietary_str} restaurants in {location} 2024"
+    dietary_str = ', '.join(dietary_needs) if dietary_needs else 'popular'
+    query = f"best {dietary_str} restaurants in {location}"
     
-    results = search_tavily(query, max_results=5)
+    results = search_tavily(query, max_results=2)  # Only get 2 results
     
+    import re
     for result in results:
         title = result.get('title', 'Restaurant')
         content = result.get('content', '')
         
-        # Extract restaurant name from title (remove site names)
-        name = title.split('|')[0].split('-')[0].strip()
-        if len(name) > 50:
-            name = name[:50]
+        # Try to extract actual restaurant names from content
+        # Look for patterns like "Restaurant Name" or capitalized names
+        restaurant_names = re.findall(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}(?:\s+Restaurant|\s+Cafe|\s+Bistro|\s+Kitchen)?)', content)
         
-        # Clean up description
-        description = content[:200].strip()
-        if description:
-            # Remove URLs and clean up
-            description = description.split('http')[0].strip()
+        if restaurant_names:
+            name = restaurant_names[0]
+        else:
+            # Extract from title
+            name = title.split('|')[0].split('-')[0].strip()
+            name = re.sub(r'^\d+[\.\)]\s*', '', name)
+            name = re.sub(r'^Best\s+|^Top\s+\d+\s+', '', name, flags=re.IGNORECASE)
+            name = name[:40]
+        
+        # Get first sentence only
+        sentences = content.split('.')
+        description = sentences[0].strip() if sentences else content[:80]
         
         restaurants.append({
             'name': name,
             'description': description,
             'dietary_options': dietary_needs,
             'price_tier': '$$',
-            'cuisine': 'Various',
-            'url': result.get('url', '')
+            'cuisine': 'Various'
         })
     
     # Fallback
     if not restaurants:
         restaurants = [
             {
-                'name': f'{location} Bistro',
-                'description': f'Local favorite with {dietary_str} options',
+                'name': f'{location} Cafe',
+                'description': f'Popular local spot',
                 'dietary_options': dietary_needs,
                 'price_tier': '$$',
                 'cuisine': 'American'
+            },
+            {
+                'name': f'{location} Bistro',
+                'description': f'Cozy neighborhood restaurant',
+                'dietary_options': dietary_needs,
+                'price_tier': '$$',
+                'cuisine': 'Various'
             }
         ]
     
-    return restaurants[:5]
+    return restaurants[:2]  # Return exactly 2 restaurants
 
 def generate_day_plan(day_num: int, date: str, location: str, preferences: Dict) -> Dict:
     """Generate a single day's itinerary"""
@@ -258,6 +272,19 @@ def ai_concierge():
         
         has_kids = 'kid' in message or 'child' in message or 'family' in message
         
+        # Check for specific interests (beach, museum, etc.)
+        specific_interest = ''
+        if 'beach' in message:
+            specific_interest = 'beach'
+        elif 'museum' in message:
+            specific_interest = 'museum'
+        elif 'park' in message:
+            specific_interest = 'park'
+        elif 'hiking' in message or 'hike' in message:
+            specific_interest = 'hiking trail'
+        elif 'shopping' in message or 'shop' in message:
+            specific_interest = 'shopping'
+        
         # Determine intent
         if 'packing' in message or 'pack' in message or 'bring' in message:
             # Generate packing list
@@ -307,6 +334,7 @@ def ai_concierge():
             prefs = {
                 'has_kids': has_kids,
                 'dietary_needs': dietary_needs,
+                'specific_interest': specific_interest,
                 'interests': []
             }
             
@@ -335,48 +363,28 @@ def ai_concierge():
             restaurants = get_restaurant_recommendations(location, dietary_needs)
             packing_list = generate_packing_list(location, (start_date, end_date))
             
-            # Format response beautifully
-            response_text = f"✈️ **{num_days}-Day Itinerary for {location}**\n\n"
+            # Format response - SHORT and CLEAR
+            response_text = f"✈️ **{num_days}-Day Trip to {location}**\n\n"
             
             for plan in daily_plans:
-                response_text += f"📅 **Day {plan['day']}** - {plan['date']}\n\n"
-                response_text += f"🌅 **Morning** ({plan['morning']['time']})\n"
-                response_text += f"   {plan['morning']['activity']['title']}\n"
-                if plan['morning']['activity'].get('description'):
-                    response_text += f"   {plan['morning']['activity']['description'][:100]}...\n"
-                response_text += f"   💡 {plan['morning']['notes']}\n\n"
+                response_text += f"**Day {plan['day']}** ({plan['date']})\n\n"
                 
-                response_text += f"☀️ **Afternoon** ({plan['afternoon']['time']})\n"
-                response_text += f"   {plan['afternoon']['activity']['title']}\n"
-                if plan['afternoon']['activity'].get('description'):
-                    response_text += f"   {plan['afternoon']['activity']['description'][:100]}...\n"
-                response_text += f"   💡 {plan['afternoon']['notes']}\n\n"
+                # Places to visit (2 per day)
+                response_text += f"📍 **Places to Visit:**\n"
+                response_text += f"1. {plan['morning']['activity']['title']}\n"
+                response_text += f"2. {plan['afternoon']['activity']['title']}\n\n"
                 
-                response_text += f"🌆 **Evening** ({plan['evening']['time']})\n"
-                response_text += f"   {plan['evening']['activity']['title']}\n"
-                if plan['evening']['activity'].get('description'):
-                    response_text += f"   {plan['evening']['activity']['description'][:100]}...\n"
-                response_text += f"   💡 {plan['evening']['notes']}\n\n"
+                # Restaurants (2 per day)
+                response_text += f"🍽️ **Where to Eat:**\n"
+                if len(restaurants) >= 2:
+                    response_text += f"1. {restaurants[0]['name']}\n"
+                    response_text += f"2. {restaurants[1]['name']}\n\n"
+                else:
+                    response_text += f"Check local restaurants in {location}\n\n"
+                
                 response_text += "---\n\n"
             
-            response_text += f"🎯 **Top Recommended Activities:**\n\n"
-            for i, act in enumerate(activities[:3], 1):
-                response_text += f"{i}. **{act['title']}**\n"
-                response_text += f"   Duration: {act['duration']} | Price: {act['price_tier']}\n"
-                if act.get('description'):
-                    response_text += f"   {act['description'][:100]}...\n"
-                response_text += "\n"
-            
-            response_text += f"\n🍽️ **Where to Eat:**\n\n"
-            for i, rest in enumerate(restaurants[:3], 1):
-                response_text += f"{i}. **{rest['name']}** ({rest['price_tier']})\n"
-                if rest.get('description'):
-                    response_text += f"   {rest['description'][:100]}...\n"
-                response_text += "\n"
-            
-            response_text += "\n💼 **Don't Forget to Pack:**\n"
-            response_text += ", ".join(packing_list[:5]) + ", and more!\n"
-            response_text += "\n✨ Have an amazing trip!"
+            response_text += "✨ Enjoy your trip!"
             
             return jsonify({
                 'success': True,
