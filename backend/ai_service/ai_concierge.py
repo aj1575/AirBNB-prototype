@@ -72,128 +72,150 @@ def generate_packing_list(location: str, dates: tuple, weather: str = None) -> L
     return base_items
 
 def get_activity_recommendations(location: str, preferences: Dict) -> List[Dict]:
-    """Get activity recommendations based on preferences - returns only 2 specific places"""
+    """Get activity recommendations - returns only 2 specific place names"""
     activities = []
     
     # Check for specific requests (beach, museum, etc.)
     specific_interest = preferences.get('specific_interest', '')
     
     if specific_interest:
-        query = f"{specific_interest} in {location}"
+        query = f"famous {specific_interest} to visit in {location}"
     else:
-        query = f"must visit places in {location} 2024"
+        query = f"top tourist attractions landmarks in {location}"
     
-    results = search_tavily(query, max_results=2)  # Only get 2 results
+    results = search_tavily(query, max_results=3)
+    
+    import re
+    extracted_places = []
     
     for result in results:
-        title = result.get('title', 'Activity')
         content = result.get('content', '')
         
-        # Extract actual place names from content
-        import re
-        # Try to find specific place names (capitalized words)
-        places = re.findall(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Park|Beach|Museum|Bridge|Tower|Center|Island|Market|Square|Garden)))', content)
+        # Extract place names - look for proper nouns followed by location keywords
+        # Pattern: Capitalized words + (Park|Beach|Museum|Bridge|Tower|etc.)
+        place_patterns = [
+            r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}\s+(?:Park|Beach|Museum|Bridge|Tower|Center|Island|Market|Square|Garden|Zoo|Aquarium|Gallery|Theater|Stadium|Arena|Pier|Wharf|Hill|Mountain|Lake|Bay))',
+            r'(?:visit|see|explore)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})',
+            r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})(?:\s+is\s+a\s+(?:famous|popular|iconic|historic))',
+        ]
         
-        if places:
-            clean_title = places[0]
-        else:
-            # Clean up title
-            clean_title = title.split('|')[0].split('-')[0].strip()
-            clean_title = re.sub(r'^\d+[\.\)]\s*', '', clean_title)
-            clean_title = re.sub(r'^THE\s+\d+\s+BEST\s+', '', clean_title, flags=re.IGNORECASE)
-            clean_title = clean_title[:60]
-        
-        # Get first sentence of description
-        sentences = content.split('.')
-        description = sentences[0].strip() if sentences else content[:100]
-        
+        for pattern in place_patterns:
+            matches = re.findall(pattern, content)
+            for match in matches:
+                place_name = match.strip()
+                # Filter out generic words and article titles
+                if (len(place_name) > 5 and 
+                    place_name not in extracted_places and
+                    not place_name.startswith('Best') and
+                    not place_name.startswith('Top') and
+                    not place_name.startswith('The Best') and
+                    'Things To Do' not in place_name and
+                    'Places To Visit' not in place_name):
+                    extracted_places.append(place_name)
+                    if len(extracted_places) >= 2:
+                        break
+            if len(extracted_places) >= 2:
+                break
+    
+    # Create activities from extracted places
+    for place in extracted_places[:2]:
         activities.append({
-            'title': clean_title,
-            'description': description,
-            'url': result.get('url', ''),
+            'title': place,
+            'description': f'Popular attraction in {location}',
             'price_tier': '$$',
             'duration': '2-3 hours'
         })
     
-    # Fallback if no results
-    if not activities:
-        activities = [
-            {
-                'title': f'{location} Downtown',
-                'description': 'Explore the historic downtown area',
-                'price_tier': '$',
-                'duration': '2-3 hours'
-            },
-            {
-                'title': f'{location} Waterfront',
-                'description': 'Visit the scenic waterfront area',
-                'price_tier': '$',
-                'duration': '2-3 hours'
-            }
-        ]
+    # Fallback with location-specific defaults
+    if len(activities) == 0:
+        # Try to use well-known landmarks based on location
+        if 'san francisco' in location.lower():
+            activities = [
+                {'title': 'Golden Gate Bridge', 'description': 'Iconic landmark', 'price_tier': '$', 'duration': '2-3 hours'},
+                {'title': 'Fisherman\'s Wharf', 'description': 'Waterfront district', 'price_tier': '$$', 'duration': '2-3 hours'}
+            ]
+        elif 'santa monica' in location.lower():
+            activities = [
+                {'title': 'Santa Monica Pier', 'description': 'Famous pier and beach', 'price_tier': '$', 'duration': '2-3 hours'},
+                {'title': 'Third Street Promenade', 'description': 'Shopping and dining', 'price_tier': '$$', 'duration': '2-3 hours'}
+            ]
+        else:
+            activities = [
+                {'title': f'{location} Downtown', 'description': 'City center', 'price_tier': '$', 'duration': '2-3 hours'},
+                {'title': f'{location} Main Attraction', 'description': 'Popular spot', 'price_tier': '$$', 'duration': '2-3 hours'}
+            ]
     
-    return activities[:2]  # Return exactly 2 activities
+    return activities[:2]
 
 def get_restaurant_recommendations(location: str, dietary_needs: List[str]) -> List[Dict]:
-    """Get restaurant recommendations - returns only 2 specific restaurants"""
+    """Get restaurant recommendations - returns only 2 specific restaurant names"""
     restaurants = []
     
     # Build search query
     dietary_str = ', '.join(dietary_needs) if dietary_needs else 'popular'
-    query = f"best {dietary_str} restaurants in {location}"
+    query = f"famous {dietary_str} restaurants to eat at in {location}"
     
-    results = search_tavily(query, max_results=2)  # Only get 2 results
+    results = search_tavily(query, max_results=3)
     
     import re
+    extracted_restaurants = []
+    
     for result in results:
-        title = result.get('title', 'Restaurant')
         content = result.get('content', '')
         
-        # Try to extract actual restaurant names from content
-        # Look for patterns like "Restaurant Name" or capitalized names
-        restaurant_names = re.findall(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}(?:\s+Restaurant|\s+Cafe|\s+Bistro|\s+Kitchen)?)', content)
+        # Extract restaurant names - look for proper nouns with restaurant keywords
+        restaurant_patterns = [
+            r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\s+(?:Restaurant|Cafe|Bistro|Kitchen|Grill|Bar|Eatery|Diner|House))',
+            r'(?:try|visit|eat at|dine at)\s+([A-Z][a-z]+(?:\'s)?(?:\s+[A-Z][a-z]+){0,2})',
+            r'([A-Z][a-z]+(?:\'s)?(?:\s+[A-Z][a-z]+){0,2})(?:\s+(?:serves|offers|specializes))',
+        ]
         
-        if restaurant_names:
-            name = restaurant_names[0]
-        else:
-            # Extract from title
-            name = title.split('|')[0].split('-')[0].strip()
-            name = re.sub(r'^\d+[\.\)]\s*', '', name)
-            name = re.sub(r'^Best\s+|^Top\s+\d+\s+', '', name, flags=re.IGNORECASE)
-            name = name[:40]
-        
-        # Get first sentence only
-        sentences = content.split('.')
-        description = sentences[0].strip() if sentences else content[:80]
-        
+        for pattern in restaurant_patterns:
+            matches = re.findall(pattern, content)
+            for match in matches:
+                restaurant_name = match.strip()
+                # Filter out generic words
+                if (len(restaurant_name) > 3 and 
+                    restaurant_name not in extracted_restaurants and
+                    not restaurant_name.startswith('Best') and
+                    not restaurant_name.startswith('Top') and
+                    'Restaurants' not in restaurant_name and
+                    'Guide' not in restaurant_name):
+                    extracted_restaurants.append(restaurant_name)
+                    if len(extracted_restaurants) >= 2:
+                        break
+            if len(extracted_restaurants) >= 2:
+                break
+    
+    # Create restaurant list from extracted names
+    for name in extracted_restaurants[:2]:
         restaurants.append({
             'name': name,
-            'description': description,
+            'description': f'Popular restaurant in {location}',
             'dietary_options': dietary_needs,
             'price_tier': '$$',
             'cuisine': 'Various'
         })
     
-    # Fallback
-    if not restaurants:
-        restaurants = [
-            {
-                'name': f'{location} Cafe',
-                'description': f'Popular local spot',
-                'dietary_options': dietary_needs,
-                'price_tier': '$$',
-                'cuisine': 'American'
-            },
-            {
-                'name': f'{location} Bistro',
-                'description': f'Cozy neighborhood restaurant',
-                'dietary_options': dietary_needs,
-                'price_tier': '$$',
-                'cuisine': 'Various'
-            }
-        ]
+    # Fallback with location-specific defaults
+    if len(restaurants) == 0:
+        if 'san francisco' in location.lower():
+            restaurants = [
+                {'name': 'Greens Restaurant', 'description': 'Vegetarian fine dining', 'dietary_options': dietary_needs, 'price_tier': '$$', 'cuisine': 'Vegetarian'},
+                {'name': 'Scoma\'s', 'description': 'Seafood at Fisherman\'s Wharf', 'dietary_options': dietary_needs, 'price_tier': '$$$', 'cuisine': 'Seafood'}
+            ]
+        elif 'santa monica' in location.lower():
+            restaurants = [
+                {'name': 'The Lobster', 'description': 'Seafood with ocean views', 'dietary_options': dietary_needs, 'price_tier': '$$$', 'cuisine': 'Seafood'},
+                {'name': 'Margo\'s', 'description': 'Plant-based brunch spot', 'dietary_options': dietary_needs, 'price_tier': '$$', 'cuisine': 'Vegan'}
+            ]
+        else:
+            restaurants = [
+                {'name': f'{location} Cafe', 'description': 'Local favorite', 'dietary_options': dietary_needs, 'price_tier': '$$', 'cuisine': 'American'},
+                {'name': f'{location} Bistro', 'description': 'Cozy dining', 'dietary_options': dietary_needs, 'price_tier': '$$', 'cuisine': 'Various'}
+            ]
     
-    return restaurants[:2]  # Return exactly 2 restaurants
+    return restaurants[:2]
 
 def generate_day_plan(day_num: int, date: str, location: str, preferences: Dict) -> Dict:
     """Generate a single day's itinerary"""

@@ -42,17 +42,23 @@ const AIChatbot = () => {
                 // Fetch actual bookings
                 const bookingsRes = await getBookings();
                 if (bookingsRes.data.success && bookingsRes.data.bookings) {
-                    // Filter only ACCEPTED bookings
-                    const acceptedBookings = bookingsRes.data.bookings.filter(b => b.status === 'accepted');
+                    // Filter only ACCEPTED and UPCOMING bookings (future dates)
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
                     
-                    if (acceptedBookings.length === 0) {
+                    const upcomingBookings = bookingsRes.data.bookings.filter(b => {
+                        const startDate = new Date(b.start_date);
+                        return b.status === 'accepted' && startDate >= today;
+                    });
+                    
+                    if (upcomingBookings.length === 0) {
                         setMessages(prev => [...prev, {
                             role: 'assistant',
-                            content: 'You don\'t have any accepted bookings yet. Would you like to search for properties to book?'
+                            content: 'You don\'t have any upcoming bookings. Would you like to search for properties to book?'
                         }]);
                     } else {
-                        let bookingInfo = `You have ${acceptedBookings.length} accepted booking(s):\\n\\n`;
-                        acceptedBookings.forEach((b, idx) => {
+                        let bookingInfo = `You have ${upcomingBookings.length} upcoming booking(s):\\n\\n`;
+                        upcomingBookings.forEach((b, idx) => {
                             bookingInfo += `${idx + 1}. ${b.property_name}\\n`;
                             bookingInfo += `   Location: ${b.location}\\n`;
                             bookingInfo += `   Dates: ${new Date(b.start_date).toLocaleDateString()} - ${new Date(b.end_date).toLocaleDateString()}\\n`;
@@ -61,10 +67,10 @@ const AIChatbot = () => {
                         });
                         bookingInfo += 'Would you like me to plan an itinerary for any of these trips?';
                         
-                        // Store ACCEPTED bookings in context for future reference
+                        // Store UPCOMING bookings in context for future reference
                         setConversationContext({
                             ...conversationContext,
-                            lastBookings: acceptedBookings,
+                            lastBookings: upcomingBookings,
                             lastAction: 'show_bookings'
                         });
                         
