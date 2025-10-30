@@ -71,8 +71,8 @@ def generate_packing_list(location: str, dates: tuple, weather: str = None) -> L
     
     return base_items
 
-def get_activity_recommendations(location: str, preferences: Dict) -> List[Dict]:
-    """Get activity recommendations - returns only 2 specific place names"""
+def get_activity_recommendations(location: str, preferences: Dict, num_activities: int = 2) -> List[Dict]:
+    """Get activity recommendations - returns specific place names"""
     activities = []
     
     # Check for specific requests (beach, museum, etc.)
@@ -83,7 +83,9 @@ def get_activity_recommendations(location: str, preferences: Dict) -> List[Dict]
     else:
         query = f"top tourist attractions landmarks in {location}"
     
-    results = search_tavily(query, max_results=3)
+    # Get more results if we need more activities
+    max_results = min(num_activities + 2, 10)
+    results = search_tavily(query, max_results=max_results)
     
     import re
     extracted_places = []
@@ -112,13 +114,13 @@ def get_activity_recommendations(location: str, preferences: Dict) -> List[Dict]
                     'Things To Do' not in place_name and
                     'Places To Visit' not in place_name):
                     extracted_places.append(place_name)
-                    if len(extracted_places) >= 2:
+                    if len(extracted_places) >= num_activities:
                         break
-            if len(extracted_places) >= 2:
+            if len(extracted_places) >= num_activities:
                 break
     
     # Create activities from extracted places
-    for place in extracted_places[:2]:
+    for place in extracted_places[:num_activities]:
         activities.append({
             'title': place,
             'description': f'Popular attraction in {location}',
@@ -127,25 +129,43 @@ def get_activity_recommendations(location: str, preferences: Dict) -> List[Dict]
         })
     
     # Fallback with location-specific defaults
-    if len(activities) == 0:
-        # Try to use well-known landmarks based on location
+    if len(activities) < num_activities:
+        # Add more activities if we don't have enough
         if 'san francisco' in location.lower():
-            activities = [
+            fallback = [
                 {'title': 'Golden Gate Bridge', 'description': 'Iconic landmark', 'price_tier': '$', 'duration': '2-3 hours'},
-                {'title': 'Fisherman\'s Wharf', 'description': 'Waterfront district', 'price_tier': '$$', 'duration': '2-3 hours'}
+                {'title': 'Fisherman\'s Wharf', 'description': 'Waterfront district', 'price_tier': '$$', 'duration': '2-3 hours'},
+                {'title': 'Alcatraz Island', 'description': 'Historic prison', 'price_tier': '$$$', 'duration': '3-4 hours'},
+                {'title': 'Chinatown', 'description': 'Historic neighborhood', 'price_tier': '$', 'duration': '2-3 hours'},
+                {'title': 'Golden Gate Park', 'description': 'Large urban park', 'price_tier': '$', 'duration': '2-3 hours'},
+                {'title': 'Union Square', 'description': 'Shopping district', 'price_tier': '$$', 'duration': '2-3 hours'}
             ]
         elif 'santa monica' in location.lower():
-            activities = [
+            fallback = [
                 {'title': 'Santa Monica Pier', 'description': 'Famous pier and beach', 'price_tier': '$', 'duration': '2-3 hours'},
-                {'title': 'Third Street Promenade', 'description': 'Shopping and dining', 'price_tier': '$$', 'duration': '2-3 hours'}
+                {'title': 'Third Street Promenade', 'description': 'Shopping and dining', 'price_tier': '$$', 'duration': '2-3 hours'},
+                {'title': 'Santa Monica Beach', 'description': 'Popular beach', 'price_tier': '$', 'duration': '2-3 hours'},
+                {'title': 'Palisades Park', 'description': 'Clifftop park with ocean views', 'price_tier': '$', 'duration': '1-2 hours'},
+                {'title': 'Venice Beach Boardwalk', 'description': 'Nearby beach boardwalk', 'price_tier': '$', 'duration': '2-3 hours'},
+                {'title': 'Getty Villa', 'description': 'Art museum', 'price_tier': '$$', 'duration': '2-3 hours'}
             ]
         else:
-            activities = [
+            fallback = [
                 {'title': f'{location} Downtown', 'description': 'City center', 'price_tier': '$', 'duration': '2-3 hours'},
-                {'title': f'{location} Main Attraction', 'description': 'Popular spot', 'price_tier': '$$', 'duration': '2-3 hours'}
+                {'title': f'{location} Main Attraction', 'description': 'Popular spot', 'price_tier': '$$', 'duration': '2-3 hours'},
+                {'title': f'{location} Park', 'description': 'Local park', 'price_tier': '$', 'duration': '2-3 hours'},
+                {'title': f'{location} Museum', 'description': 'Local museum', 'price_tier': '$$', 'duration': '2-3 hours'}
             ]
+        
+        # Add fallback activities until we have enough
+        for fb_activity in fallback:
+            if len(activities) >= num_activities:
+                break
+            # Don't add duplicates
+            if fb_activity['title'] not in [a['title'] for a in activities]:
+                activities.append(fb_activity)
     
-    return activities[:2]
+    return activities[:num_activities]
 
 def get_restaurant_recommendations(location: str, dietary_needs: List[str]) -> List[Dict]:
     """Get restaurant recommendations - returns only 2 specific restaurant names"""
@@ -217,26 +237,28 @@ def get_restaurant_recommendations(location: str, dietary_needs: List[str]) -> L
     
     return restaurants[:2]
 
-def generate_day_plan(day_num: int, date: str, location: str, preferences: Dict) -> Dict:
-    """Generate a single day's itinerary"""
-    activities = get_activity_recommendations(location, preferences)
+def generate_day_plan(day_num: int, date: str, location: str, preferences: Dict, all_activities: List[Dict]) -> Dict:
+    """Generate a single day's itinerary using different activities for each day"""
+    # Use different activities for each day
+    start_idx = (day_num - 1) * 2
+    day_activities = all_activities[start_idx:start_idx + 2] if start_idx < len(all_activities) else all_activities[:2]
     
     return {
         'day': day_num,
         'date': date,
         'morning': {
             'time': '9:00 AM - 12:00 PM',
-            'activity': activities[0] if len(activities) > 0 else {'title': 'Explore local area'},
+            'activity': day_activities[0] if len(day_activities) > 0 else {'title': 'Explore local area'},
             'notes': 'Start your day early to avoid crowds'
         },
         'afternoon': {
             'time': '1:00 PM - 5:00 PM',
-            'activity': activities[1] if len(activities) > 1 else {'title': 'Lunch and relaxation'},
+            'activity': day_activities[1] if len(day_activities) > 1 else {'title': 'Lunch and relaxation'},
             'notes': 'Take breaks as needed, especially with kids'
         },
         'evening': {
             'time': '6:00 PM - 9:00 PM',
-            'activity': activities[2] if len(activities) > 2 else {'title': 'Dinner and evening stroll'},
+            'activity': {'title': 'Dinner and evening stroll'},
             'notes': 'Enjoy local cuisine and nightlife'
         }
     }
@@ -380,15 +402,16 @@ def ai_concierge():
             
             num_days = min(num_days, 7)  # Limit to 7 days
             
+            # Get activities and restaurants (2 activities per day)
+            activities = get_activity_recommendations(location, prefs, num_activities=num_days * 2)
+            restaurants = get_restaurant_recommendations(location, dietary_needs)
+            packing_list = generate_packing_list(location, (start_date, end_date))
+            
+            # Generate daily plans with different activities for each day
             daily_plans = []
             for i in range(num_days):
                 day_date = (start + timedelta(days=i)).strftime('%Y-%m-%d')
-                daily_plans.append(generate_day_plan(i + 1, day_date, location, prefs))
-            
-            # Get activities and restaurants
-            activities = get_activity_recommendations(location, prefs)
-            restaurants = get_restaurant_recommendations(location, dietary_needs)
-            packing_list = generate_packing_list(location, (start_date, end_date))
+                daily_plans.append(generate_day_plan(i + 1, day_date, location, prefs, activities))
             
             # Format response - SHORT and CLEAR
             response_text = f"✈️ **{num_days}-Day Trip to {location}**\n\n"
