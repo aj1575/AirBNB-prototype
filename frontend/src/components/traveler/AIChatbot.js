@@ -91,17 +91,21 @@ const AIChatbot = () => {
             const messageText = input.trim();
             const booking_context = {};
             
-            // Check if user is referring to their recent booking
+            // Check if user is referring to their booking
             if ((userQuery.includes('my booking') || userQuery.includes('that place') || 
                  userQuery.includes('there') || userQuery.includes('same place') ||
-                 userQuery.includes('recent booking') || userQuery.includes('my reservation') ||
-                 (userQuery.includes('based on') && conversationContext.lastBookings)) && 
+                 userQuery.includes('upcoming booking') || userQuery.includes('recent booking') || 
+                 userQuery.includes('my reservation') || userQuery.includes('my trip') ||
+                 userQuery.includes('that trip') || userQuery.includes('this trip') ||
+                 (userQuery.includes('based on') && conversationContext.lastBookings) ||
+                 (userQuery.includes('plan') && conversationContext.lastBookings)) && 
                 conversationContext.lastBookings && conversationContext.lastBookings.length > 0) {
-                // Use the most recent booking location
+                // Use the most recent (upcoming) booking location
                 const recentBooking = conversationContext.lastBookings[0];
                 booking_context.location = recentBooking.location;
                 booking_context.start_date = recentBooking.start_date;
                 booking_context.end_date = recentBooking.end_date;
+                console.log('Using booking context:', booking_context);
             } else {
                 // Extract location if mentioned (more flexible patterns)
                 const locationMatch = messageText.match(/(?:to|in|for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);

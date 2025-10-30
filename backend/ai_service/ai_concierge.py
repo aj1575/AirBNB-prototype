@@ -261,7 +261,12 @@ def ai_concierge():
         start_date = booking_context.get('start_date', '')
         end_date = booking_context.get('end_date', '')
         
-        # Try to extract from message if not provided
+        # Log what we received
+        print(f"Received booking_context: {booking_context}")
+        print(f"Location from context: {location}")
+        print(f"Message: {message}")
+        
+        # Try to extract from message ONLY if not provided in booking context
         if not location:
             # Try multiple patterns (case-insensitive)
             import re
