@@ -278,10 +278,11 @@ function PropertyDetails() {
                                         value={bookingData.guests}
                                         onChange={handleBookingChange}
                                     >
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                                        {Array.from({ length: property.max_guests || 1 }, (_, i) => i + 1).map(num => (
                                             <option key={num} value={num}>{num}</option>
                                         ))}
                                     </select>
+                                    <small className="text-muted">Maximum {property.max_guests || 1} guest{property.max_guests > 1 ? 's' : ''} allowed</small>
                                 </div>
 
                                 <button

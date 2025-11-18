@@ -1,10 +1,27 @@
 const express = require('express');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
+const { connectMongoDB } = require('./config/mongodb');
+const { initKafka, disconnectKafka } = require('./kafka/kafkaConfig');
+const { startBookingConsumer } = require('./kafka/bookingConsumer');
+
 const app = express();
+
+// Initialize MongoDB
+connectMongoDB();
+
+// Initialize Kafka (non-blocking)
+setTimeout(() => {
+    initKafka().then(() => {
+        startBookingConsumer();
+    }).catch(err => {
+        console.log('⚠️  Kafka not available, continuing without it');
+    });
+}, 2000);
 
 // CORS Configuration - Allow credentials for session management
 app.use(cors({ 
@@ -19,9 +36,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve Static Files (for uploaded images)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Session Configuration
-app.use(session({
-    secret: process.env.SESSION_SECRET,
+// Session Configuration with MongoDB Store
+const sessionConfig = {
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
     cookie: { 
@@ -29,7 +46,23 @@ app.use(session({
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
-}));
+};
+
+// Use MongoDB for session storage if available
+if (process.env.MONGODB_URI) {
+    sessionConfig.store = MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        touchAfter: 24 * 3600, // Lazy session update
+        crypto: {
+            secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production'
+        }
+    });
+    console.log('✅ Using MongoDB for session storage');
+} else {
+    console.log('⚠️  Using memory store for sessions (not recommended for production)');
+}
+
+app.use(session(sessionConfig));
 
 // Log all requests (for debugging)
 app.use((req, res, next) => {
@@ -70,6 +103,19 @@ app.get('/health', (req, res) => {
         status: 'healthy',
         timestamp: new Date().toISOString(),
         uptime: process.uptime()
+    });
+});
+
+// API Health Check (for K8s probes)
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        services: {
+            mongodb: process.env.MONGODB_URI ? 'configured' : 'not configured',
+            kafka: process.env.KAFKA_BROKER ? 'configured' : 'not configured'
+        }
     });
 });
 
@@ -219,16 +265,18 @@ const server = app.listen(PORT, () => {
 });
 
 // Graceful Shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
     console.log('SIGTERM signal received: closing HTTP server');
+    await disconnectKafka();
     server.close(() => {
         console.log('HTTP server closed');
         process.exit(0);
     });
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
     console.log('\nSIGINT signal received: closing HTTP server');
+    await disconnectKafka();
     server.close(() => {
         console.log('HTTP server closed');
         process.exit(0);

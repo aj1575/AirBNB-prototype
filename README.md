@@ -1,6 +1,8 @@
-# Airbnb Prototype - Lab 1
+# Airbnb Prototype - Labs 1 & 2
 
-A full-stack Airbnb clone with AI-powered travel concierge built using React, Node.js, Express, MySQL, and Python.
+A full-stack Airbnb clone with AI-powered travel concierge, containerized with Docker, orchestrated with Kubernetes, featuring Kafka message queuing, MongoDB session storage, and Redux state management.
+
+Built using React, Node.js, Express, MySQL, MongoDB, Kafka, Docker, Kubernetes, and Python.
 
 ---
 
@@ -30,19 +32,31 @@ A full-stack Airbnb clone with AI-powered travel concierge built using React, No
 - Packing checklist (weather-aware)
 - Real-time web search integration
 
+### Lab 2 Enhancements
+- **Docker & Kubernetes**: Containerized services with orchestration
+- **Kafka Integration**: Asynchronous booking event processing
+- **MongoDB**: Session storage with encryption
+- **Redux**: Centralized state management with persistence
+- **Performance Testing**: JMeter test plans for 100-500 concurrent users
+- **AWS Ready**: ECR and EKS deployment configurations
+
 ---
 
 ## Tech Stack
 
 **Frontend:**
 - React 18
+- Redux Toolkit (state management)
+- Redux Persist (state persistence)
 - Bootstrap 5
 - Axios
 - React Router
 
 **Backend:**
 - Node.js + Express
-- MySQL
+- MySQL (primary database)
+- MongoDB (session storage)
+- Kafka (message broker)
 - Express-session
 - Bcrypt.js
 - Multer (file uploads)
@@ -52,14 +66,30 @@ A full-stack Airbnb clone with AI-powered travel concierge built using React, No
 - Tavily API (web search)
 - Natural Language Processing
 
+**DevOps & Infrastructure:**
+- Docker & Docker Compose
+- Kubernetes (K8s)
+- Horizontal Pod Autoscaling
+- Apache JMeter (performance testing)
+- AWS EKS (optional deployment)
+- AWS ECR (container registry)
+
 ---
 
 ## Prerequisites
 
-- Node.js (v14+)
+**Lab 1:**
+- Node.js (v18+)
 - Python 3.8+
 - MySQL 8.0+
 - npm or yarn
+
+**Lab 2 Additional:**
+- Docker Desktop (with Kubernetes enabled)
+- kubectl CLI
+- Apache JMeter 5.5+
+- MongoDB Compass (optional)
+- AWS CLI (for AWS deployment)
 
 ---
 
@@ -105,6 +135,24 @@ python3 ai_concierge.py
 ---
 
 ## Running the Application
+
+### Option 1: Docker Compose (Recommended for Lab 2)
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Access application
+# Frontend: http://localhost:3000
+# Backend: http://localhost:5000
+# MongoDB: localhost:27017
+# Kafka: localhost:9093
+
+# Stop services
+docker-compose down
+```
+
+### Option 2: Traditional Setup (Lab 1)
 
 **Backend:** http://localhost:5001
 **Frontend:** http://localhost:3000
@@ -165,15 +213,41 @@ AirBNB-prototype/
 │   │   ├── components/
 │   │   ├── pages/
 │   │   ├── services/
+│   │   ├── redux/              # Lab 2: Redux state management
+│   │   │   ├── store.js
+│   │   │   └── slices/
 │   │   └── utils/
+│   ├── Dockerfile              # Lab 2: Frontend container
+│   ├── nginx.conf              # Lab 2: Nginx configuration
 │   └── package.json
 ├── backend/
 │   ├── routes/
 │   ├── controllers/
 │   ├── middleware/
 │   ├── database/
+│   ├── config/
+│   │   └── mongodb.js          # Lab 2: MongoDB configuration
+│   ├── kafka/                  # Lab 2: Kafka integration
+│   │   ├── kafkaConfig.js
+│   │   └── bookingConsumer.js
 │   ├── ai_service/
+│   ├── Dockerfile              # Lab 2: Backend container
 │   └── package.json
+├── k8s/                        # Lab 2: Kubernetes manifests
+│   ├── namespace.yaml
+│   ├── mongodb-deployment.yaml
+│   ├── kafka-deployment.yaml
+│   ├── backend-deployment.yaml
+│   └── frontend-deployment.yaml
+├── jmeter/                     # Lab 2: Performance testing
+│   ├── README.md
+│   ├── test-data/
+│   └── scripts/
+├── docker-compose.yml          # Lab 2: Docker Compose
+├── LAB2_DEPLOYMENT_GUIDE.md    # Lab 2: Complete deployment guide
+├── LAB2_SUMMARY.md             # Lab 2: Implementation summary
+├── MANUAL_STEPS.md             # Lab 2: Manual steps required
+├── QUICK_START.md              # Lab 2: Quick start guide
 ├── POSTMAN_COLLECTION.json
 ├── POSTMAN_SETUP_GUIDE.md
 ├── NON_FUNCTIONAL_REQUIREMENTS.md
@@ -206,6 +280,7 @@ AirBNB-prototype/
 
 ## Key Features Implemented
 
+### Lab 1 Features
 - [x] Session-based authentication
 - [x] Profile management with image upload
 - [x] Property CRUD operations
@@ -217,25 +292,94 @@ AirBNB-prototype/
 - [x] Optimized database queries
 - [x] API documentation (Postman)
 
+### Lab 2 Features
+- [x] Docker containerization (Frontend, Backend)
+- [x] Docker Compose orchestration
+- [x] Kubernetes deployment manifests
+- [x] Horizontal Pod Autoscaling (HPA)
+- [x] Kafka message broker integration
+- [x] Asynchronous booking event processing
+- [x] MongoDB session storage
+- [x] Password encryption with bcrypt
+- [x] Redux state management (Auth, Property, Booking)
+- [x] Redux Persist for auth state
+- [x] JMeter performance test infrastructure
+- [x] AWS EKS deployment ready
+- [x] Health check endpoints for K8s probes
+
 ---
+
+## Architecture
+
+### Kafka Event Flow (Lab 2)
+
+```
+Traveler creates booking
+    ↓
+Backend (Producer) → Kafka Topic: booking-created
+    ↓
+Backend (Consumer) → Process event → Notify owner
+    
+Owner accepts booking
+    ↓
+Backend (Producer) → Kafka Topic: booking-status-updated
+    ↓
+Backend (Consumer) → Process event → Notify traveler
+```
+
+### Kubernetes Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│           Kubernetes Cluster                │
+│                                             │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │ Frontend │  │ Backend  │  │ MongoDB  │ │
+│  │  (2 pods)│  │ (3 pods) │  │ (1 pod)  │ │
+│  └──────────┘  └──────────┘  └──────────┘ │
+│                                             │
+│  ┌──────────┐  ┌──────────┐               │
+│  │  Kafka   │  │Zookeeper │               │
+│  │ (1 pod)  │  │ (1 pod)  │               │
+│  └──────────┘  └──────────┘               │
+│                                             │
+│  HPA: Auto-scale backend 2-10 pods         │
+└─────────────────────────────────────────────┘
+```
 
 ## Security
 
-- Password hashing with bcrypt
+- Password hashing with bcrypt (salt rounds: 10)
 - Session-based authentication
+- MongoDB session encryption
 - SQL injection prevention (parameterized queries)
 - XSS protection (React escaping)
 - File upload validation
 - Role-based access control
+- Secure cookie configuration
 
 ---
 
-## Submission Files
+## Documentation
 
+### Lab 1 Documentation
 1. **POSTMAN_COLLECTION.json** - Complete API documentation
 2. **POSTMAN_SETUP_GUIDE.md** - Testing instructions
 3. **NON_FUNCTIONAL_REQUIREMENTS.md** - Requirements documentation
-4. **README.md** - This file
+
+### Lab 2 Documentation
+1. **LAB2_DEPLOYMENT_GUIDE.md** - Complete deployment guide for Docker, Kubernetes, Kafka, MongoDB, Redux
+2. **LAB2_SUMMARY.md** - Implementation summary and what's been completed
+3. **MANUAL_STEPS.md** - Step-by-step manual actions required
+4. **QUICK_START.md** - Fast track to get running
+5. **frontend/REDUX_INTEGRATION.md** - Redux usage examples and best practices
+6. **jmeter/README.md** - JMeter performance testing guide
+
+### Quick Links
+- 🚀 **New to Lab 2?** Start with `QUICK_START.md`
+- 📖 **Full Deployment?** Read `LAB2_DEPLOYMENT_GUIDE.md`
+- 🔍 **What's Implemented?** Check `LAB2_SUMMARY.md`
+- ✅ **Manual Steps?** Follow `MANUAL_STEPS.md`
 
 ---
 

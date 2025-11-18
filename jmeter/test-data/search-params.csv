@@ -1,0 +1,6 @@
+location,type,minPrice,maxPrice
+New York,Apartment,50,200
+Los Angeles,House,100,300
+Chicago,Condo,75,250
+Miami,Villa,150,400
+Seattle,Apartment,60,180

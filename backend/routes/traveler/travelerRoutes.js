@@ -6,6 +6,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { isAuthenticated, isTraveler } = require('../../middleware/auth');
+const { publishMessage, TOPICS } = require('../../kafka/kafkaConfig');
 
 // Multer config for profile images
 const storage = multer.diskStorage({
@@ -361,6 +362,14 @@ router.post('/bookings', isAuthenticated, isTraveler, async (req, res) => {
 
         const property = properties[0];
 
+        // Validate guest count against property's max_guests limit
+        if (guests > property.max_guests) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `This property can accommodate a maximum of ${property.max_guests} guest${property.max_guests > 1 ? 's' : ''}. Please reduce the number of guests.` 
+            });
+        }
+
         // Check if dates are available (no accepted bookings overlap)
         const [conflicts] = await db.query(
             `SELECT id FROM bookings 
@@ -388,10 +397,25 @@ router.post('/bookings', isAuthenticated, isTraveler, async (req, res) => {
             [propertyId, req.session.userId, startDate, endDate, guests, totalPrice, 'pending']
         );
 
+        const bookingId = result.insertId;
+
+        // Publish booking created event to Kafka
+        await publishMessage(TOPICS.BOOKING_CREATED, {
+            bookingId,
+            propertyId,
+            travelerId: req.session.userId,
+            startDate,
+            endDate,
+            guests,
+            totalPrice,
+            status: 'pending',
+            timestamp: new Date().toISOString()
+        });
+
         res.status(201).json({ 
             success: true, 
             message: 'Booking request created',
-            bookingId: result.insertId,
+            bookingId,
             status: 'pending'
         });
 

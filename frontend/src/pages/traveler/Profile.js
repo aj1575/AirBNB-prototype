@@ -100,10 +100,11 @@ function TravelerProfile() {
             );
 
             if (response.data.success) {
-                setFormData({ ...formData, profile_image: response.data.imageUrl });
                 setSuccess('Profile image updated!');
                 setSelectedImage(null);
                 setImagePreview(null);
+                // Refetch profile to ensure data is synced with backend
+                await fetchProfile();
             }
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to upload image');

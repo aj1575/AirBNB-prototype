@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { publishMessage, TOPICS } = require('../kafka/kafkaConfig');
 
 // ========== MULTER CONFIG ==========
 
@@ -611,6 +612,15 @@ const acceptBooking = async (req, res) => {
             [id]
         );
 
+        // Publish booking status updated event to Kafka
+        await publishMessage(TOPICS.BOOKING_STATUS_UPDATED, {
+            bookingId: id,
+            propertyId: booking[0].property_id,
+            travelerId: booking[0].traveler_id,
+            status: 'accepted',
+            timestamp: new Date().toISOString()
+        });
+
         res.json({
             success: true,
             message: 'Booking accepted successfully'
@@ -654,6 +664,15 @@ const cancelBooking = async (req, res) => {
             'UPDATE bookings SET status = "cancelled" WHERE id = ?',
             [id]
         );
+
+        // Publish booking cancelled event to Kafka
+        await publishMessage(TOPICS.BOOKING_CANCELLED, {
+            bookingId: id,
+            propertyId: booking[0].property_id,
+            travelerId: booking[0].traveler_id,
+            status: 'cancelled',
+            timestamp: new Date().toISOString()
+        });
 
         res.json({
             success: true,
