@@ -89,9 +89,8 @@ function TravelerProfile() {
         formDataImg.append('profile_image', selectedImage);
 
         try {
-            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
             const response = await axios.post(
-                `${API_URL}/api/traveler/profile/image`,
+                '/api/traveler/profile/image',
                 formDataImg,
                 {
                     headers: { 'Content-Type': 'multipart/form-data' },
@@ -100,10 +99,11 @@ function TravelerProfile() {
             );
 
             if (response.data.success) {
-                setFormData({ ...formData, profile_image: response.data.imageUrl });
                 setSuccess('Profile image updated!');
                 setSelectedImage(null);
                 setImagePreview(null);
+                // Refetch profile to get the updated image
+                await fetchProfile();
             }
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to upload image');
@@ -114,9 +114,16 @@ function TravelerProfile() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setSaving(true);
         setError('');
         setSuccess('');
+        
+        // Validate phone number (must be exactly 10 digits)
+        if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
+            setError('Phone number must be exactly 10 digits');
+            return;
+        }
+        
+        setSaving(true);
 
         try {
             const response = await updateProfile(formData);
@@ -186,7 +193,7 @@ function TravelerProfile() {
                                         />
                                     ) : formData.profile_image ? (
                                         <img 
-                                            src={`${process.env.REACT_APP_API_URL}${formData.profile_image}`}
+                                            src={formData.profile_image}
                                             alt="Profile"
                                             className="rounded-circle"
                                             style={{ width: '150px', height: '150px', objectFit: 'cover', border: '3px solid #6a11cb' }}

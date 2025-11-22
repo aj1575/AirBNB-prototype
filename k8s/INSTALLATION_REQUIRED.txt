@@ -1,0 +1,61 @@
+⚠️  INSTALLATION REQUIRED
+========================
+
+You need to enable Kubernetes in Docker Desktop:
+
+OPTION 1: Enable Kubernetes in Docker Desktop (RECOMMENDED - Easiest)
+----------------------------------------------------------------------
+1. Open Docker Desktop
+2. Click on Settings (gear icon)
+3. Go to "Kubernetes" tab
+4. Check "Enable Kubernetes"
+5. Click "Apply & Restart"
+6. Wait 2-3 minutes for Kubernetes to start
+
+Then verify:
+  kubectl cluster-info
+
+OPTION 2: Install Minikube (Alternative)
+-----------------------------------------
+brew install minikube
+minikube start --driver=docker
+minikube addons enable ingress
+
+OPTION 3: Install Kind (Alternative)
+-------------------------------------
+brew install kind
+kind create cluster --name airbnb-cluster
+
+================================================================================
+
+AFTER KUBERNETES IS RUNNING:
+----------------------------
+
+1. Build Docker images (they're already built from docker-compose):
+   docker images | grep airbnb-prototype
+
+2. If using Minikube, load images:
+   minikube image load airbnb-prototype-backend:latest
+   minikube image load airbnb-prototype-frontend:latest
+
+3. Deploy to Kubernetes:
+   cd k8s
+   ./deploy.sh
+
+4. Check status:
+   kubectl get pods
+   kubectl get services
+
+5. Access application:
+   - If using Docker Desktop K8s: http://localhost
+   - If using Minikube: minikube service frontend-service --url
+
+================================================================================
+
+CURRENT STATUS:
+--------------
+✅ kubectl installed
+✅ Docker Desktop installed
+❌ Kubernetes NOT enabled in Docker Desktop
+
+NEXT STEP: Enable Kubernetes in Docker Desktop (see Option 1 above)

@@ -13,8 +13,8 @@ const BookingRequests = () => {
     const fetchBookings = async () => {
         try {
             const url = filter === 'all'
-                ? `${process.env.REACT_APP_API_URL}/api/owner/bookings`
-                : `${process.env.REACT_APP_API_URL}/api/owner/bookings?status=${filter}`;
+                ? '/api/owner/bookings'
+                : `/api/owner/bookings?status=${filter}`;
 
             const response = await axios.get(url, { withCredentials: true });
 
@@ -31,7 +31,7 @@ const BookingRequests = () => {
     const handleAccept = async (bookingId) => {
         try {
             const response = await axios.put(
-                `${process.env.REACT_APP_API_URL}/api/owner/bookings/${bookingId}/accept`,
+                `/api/owner/bookings/${bookingId}/accept`,
                 {},
                 { withCredentials: true }
             );
@@ -52,7 +52,7 @@ const BookingRequests = () => {
 
         try {
             const response = await axios.put(
-                `${process.env.REACT_APP_API_URL}/api/owner/bookings/${bookingId}/cancel`,
+                `/api/owner/bookings/${bookingId}/cancel`,
                 {},
                 { withCredentials: true }
             );

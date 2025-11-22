@@ -15,7 +15,7 @@ const OwnerDashboard = () => {
     const fetchDashboardData = async () => {
         try {
             const response = await axios.get(
-                `${process.env.REACT_APP_API_URL}/api/owner/dashboard/stats`,
+                '/api/owner/dashboard/stats',
                 { withCredentials: true }
             );
 
@@ -32,7 +32,7 @@ const OwnerDashboard = () => {
     const fetchProperties = async () => {
         try {
             const response = await axios.get(
-                `${process.env.REACT_APP_API_URL}/api/owner/properties`,
+                '/api/owner/properties',
                 { withCredentials: true }
             );
 
@@ -51,7 +51,7 @@ const OwnerDashboard = () => {
 
         try {
             const response = await axios.delete(
-                `${process.env.REACT_APP_API_URL}/api/owner/properties/${propertyId}`,
+                `/api/owner/properties/${propertyId}`,
                 { withCredentials: true }
             );
 
@@ -141,7 +141,7 @@ const OwnerDashboard = () => {
                                             {/* Property Image */}
                                             {firstImage ? (
                                                 <img
-                                                    src={`${process.env.REACT_APP_API_URL}${firstImage}`}
+                                                    src={firstImage}
                                                     alt={property.name}
                                                     className="card-img-top"
                                                     style={{ 

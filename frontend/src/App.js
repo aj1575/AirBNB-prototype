@@ -1,6 +1,11 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+// Redux Store
+import { store, persistor } from './redux/store';
 
 // Shared Components
 import Navbar from './components/shared/Navbar';
@@ -26,9 +31,11 @@ import BookingManagement from './pages/owner/BookingManagement';
 
 function App() {
     return (
-        <BrowserRouter>
-            <Navbar />
-            <Routes>
+        <Provider store={store}>
+            <PersistGate loading={null} persistor={persistor}>
+                <BrowserRouter>
+                    <Navbar />
+                    <Routes>
                 <Route path="/" element={<HomePage />} />
 
                 {/* Traveler Routes */}
@@ -50,7 +57,9 @@ function App() {
                 <Route path="/owner/properties/edit/:id" element={<ProtectedRoute requiredRole="owner"><AddEditProperty /></ProtectedRoute>} />
                 <Route path="/owner/bookings" element={<ProtectedRoute requiredRole="owner"><BookingManagement /></ProtectedRoute>} />
             </Routes>
-        </BrowserRouter>
+                </BrowserRouter>
+            </PersistGate>
+        </Provider>
     );
 }
 

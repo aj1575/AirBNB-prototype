@@ -1,14 +1,20 @@
 const express = require('express');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
+
+// Lab 2: MongoDB and Kafka
+const { connectMongoDB } = require('./config/mongodb');
+const { initKafka, closeKafka } = require('./kafka/kafkaConfig');
+const { startBookingConsumer } = require('./kafka/bookingConsumer');
 
 const app = express();
 
 // CORS Configuration - Allow credentials for session management
 app.use(cors({ 
-    origin: 'http://localhost:3000', 
+    origin: ['http://localhost:3000', 'http://localhost:3001'],  // Lab 1 (3000) + Lab 2 Docker (3001)
     credentials: true 
 }));
 
@@ -19,9 +25,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve Static Files (for uploaded images)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Session Configuration
-app.use(session({
-    secret: process.env.SESSION_SECRET,
+// Session Configuration (Lab 2: Use MongoDB store if MONGODB_URI is provided)
+const sessionConfig = {
+    secret: process.env.SESSION_SECRET || 'cmpe273_airbnb_secret_key_2024',
     resave: false,
     saveUninitialized: false,
     cookie: { 
@@ -29,7 +35,18 @@ app.use(session({
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
-}));
+};
+
+// Lab 2: Use MongoDB for session storage if available
+if (process.env.MONGODB_URI) {
+    console.log('✅ Using MongoDB for session storage');
+    sessionConfig.store = MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        touchAfter: 24 * 3600 // Lazy session update
+    });
+}
+
+app.use(session(sessionConfig));
 
 // Log all requests (for debugging)
 app.use((req, res, next) => {
@@ -168,6 +185,25 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Lab 2: Initialize MongoDB and Kafka
+(async () => {
+    try {
+        // Connect to MongoDB if URI is provided
+        if (process.env.MONGODB_URI) {
+            await connectMongoDB();
+        }
+        
+        // Initialize Kafka if broker is provided
+        if (process.env.KAFKA_BROKER) {
+            await initKafka();
+            await startBookingConsumer();
+        }
+    } catch (error) {
+        console.error('❌ Failed to initialize Lab 2 services:', error.message);
+        console.log('⚠️  Continuing with Lab 1 functionality only...');
+    }
+})();
+
 // Start Server
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
@@ -219,16 +255,22 @@ const server = app.listen(PORT, () => {
 });
 
 // Graceful Shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
     console.log('SIGTERM signal received: closing HTTP server');
+    if (process.env.KAFKA_BROKER) {
+        await closeKafka();
+    }
     server.close(() => {
         console.log('HTTP server closed');
         process.exit(0);
     });
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
     console.log('\nSIGINT signal received: closing HTTP server');
+    if (process.env.KAFKA_BROKER) {
+        await closeKafka();
+    }
     server.close(() => {
         console.log('HTTP server closed');
         process.exit(0);

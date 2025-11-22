@@ -1,37 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { logoutUser } from '../../redux/slices/authSlice';
 
 const Navbar = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [user, setUser] = useState(null);
-
-    useEffect(() => {
-        const userData = localStorage.getItem('user');
-        if (userData) {
-            setUser(JSON.parse(userData));
-        }
-    }, [location]);
+    const dispatch = useDispatch();
+    const { user } = useSelector((state) => state.auth);
     
     const isOwnerPage = location.pathname.startsWith('/owner');
     const isHomePage = location.pathname === '/';
     const isLoginOrSignupPage = location.pathname.includes('/login') || location.pathname.includes('/signup');
 
     const handleLogout = async () => {
-        try {
-            const endpoint = isOwnerPage ? '/api/owner/logout' : '/api/traveler/logout';
-            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-            await axios.post(`${API_URL}${endpoint}`, {}, { withCredentials: true });
-            localStorage.removeItem('user');
-            setUser(null);
-            navigate('/');
-        } catch (error) {
-            console.error('Logout error:', error);
-            localStorage.removeItem('user');
-            setUser(null);
-            navigate('/');
-        }
+        const role = isOwnerPage ? 'owner' : 'traveler';
+        await dispatch(logoutUser(role));
+        navigate('/');
     };
 
     // Don't show navbar on home page

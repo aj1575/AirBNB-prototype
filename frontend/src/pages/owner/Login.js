@@ -1,15 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser, clearError } from '../../redux/slices/authSlice';
 
 const OwnerLogin = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { loading, error, isAuthenticated } = useSelector((state) => state.auth);
+    
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/owner/dashboard');
+        }
+    }, [isAuthenticated, navigate]);
+
+    useEffect(() => {
+        return () => {
+            dispatch(clearError());
+        };
+    }, [dispatch]);
 
     const handleChange = (e) => {
         setFormData({
@@ -20,26 +34,8 @@ const OwnerLogin = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        setLoading(true);
-
-        try {
-            const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/owner/login`,
-                formData,
-                { withCredentials: true }
-            );
-
-            if (response.data.success) {
-                // Store user data in localStorage for ProtectedRoute
-                localStorage.setItem('user', JSON.stringify({ role: 'owner', ...response.data.user }));
-                navigate('/owner/dashboard');
-            }
-        } catch (err) {
-            setError(err.response?.data?.message || 'Login failed');
-        } finally {
-            setLoading(false);
-        }
+        dispatch(clearError());
+        dispatch(loginUser({ ...formData, role: 'owner' }));
     };
 
     return (

@@ -157,7 +157,7 @@ function PropertySearch() {
                         <div className="row g-4">
                             {properties.map(property => {
                                 const firstImage = property.photos ? property.photos.split(',')[0] : null;
-                                const imageUrl = firstImage ? `${process.env.REACT_APP_API_URL}${firstImage}` : null;
+                                const imageUrl = firstImage;
                                 
                                 return (
                                 <div key={property.id} className="col-md-6 col-lg-4">

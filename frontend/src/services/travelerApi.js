@@ -1,9 +1,10 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Use relative URL for Docker (nginx proxy) or full URL for local development
+const API_URL = process.env.REACT_APP_API_URL || '';
 
 const api = axios.create({
-    baseURL: `${API_URL}/api/traveler`,
+    baseURL: API_URL ? `${API_URL}/api/traveler` : '/api/traveler',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json'

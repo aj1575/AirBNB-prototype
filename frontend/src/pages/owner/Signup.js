@@ -10,7 +10,7 @@ const OwnerSignup = () => {
         password: '',
         phone: '',
         city: '',
-        country: ''
+        state: ''
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -25,11 +25,18 @@ const OwnerSignup = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        
+        // Validate phone number (must be exactly 10 digits)
+        if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
+            setError('Phone number must be exactly 10 digits');
+            return;
+        }
+        
         setLoading(true);
 
         try {
             const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/owner/signup`,
+                '/api/owner/signup',
                 formData,
                 { withCredentials: true }
             );
@@ -117,14 +124,18 @@ const OwnerSignup = () => {
                                         />
                                     </div>
                                     <div className="col-md-6 mb-3">
-                                        <label className="form-label">Country</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            name="country"
-                                            value={formData.country}
+                                        <label className="form-label">State</label>
+                                        <select
+                                            className="form-select"
+                                            name="state"
+                                            value={formData.state}
                                             onChange={handleChange}
-                                        />
+                                        >
+                                            <option value="">Select State</option>
+                                            {['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'].map(state => (
+                                                <option key={state} value={state}>{state}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
 

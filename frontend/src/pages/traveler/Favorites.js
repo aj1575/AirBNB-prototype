@@ -87,10 +87,9 @@ function Favorites() {
             ) : (
                 <div className="row g-4">
                     {favorites.map(property => {
-                        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
                         console.log('Property:', property.name, 'Images:', property.images);
                         const imageUrl = property.images && property.images.length > 0 
-                            ? `${API_URL}${property.images[0]}` 
+                            ? property.images[0] 
                             : null;
                         console.log('Image URL:', imageUrl);
                         

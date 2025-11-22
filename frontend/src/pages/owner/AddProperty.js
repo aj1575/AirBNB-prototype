@@ -12,14 +12,16 @@ const AddEditProperty = () => {
     const [formData, setFormData] = useState({
         name: '',
         type: 'Apartment',
-        location: '',
+        address: '',
+        city: '',
+        state: '',
+        country: 'USA',
         description: '',
-        pricing: '',
+        price_per_night: '',
         bedrooms: 1,
         bathrooms: 1,
         max_guests: 1,
-        amenities: [],
-        available: true
+        amenities: []
     });
 
     const [loading, setLoading] = useState(false);
@@ -27,6 +29,13 @@ const AddEditProperty = () => {
 
     const amenitiesList = ['WiFi', 'Kitchen', 'Parking', 'Pool', 'Gym', 'Pet Friendly', 'Air Conditioning', 'Heating', 'Washer', 'Dryer'];
     const propertyTypes = ['Apartment', 'House', 'Condo', 'Villa', 'Studio', 'Townhouse'];
+    const usStates = [
+        'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+        'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+        'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+        'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+        'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+    ];
 
     useEffect(() => {
         if (isEditMode) {
@@ -38,7 +47,7 @@ const AddEditProperty = () => {
     const fetchProperty = async () => {
         try {
             const response = await axios.get(
-                `${process.env.REACT_APP_API_URL}/api/owner/properties/${id}`,
+                `/api/owner/properties/${id}`,
                 { withCredentials: true }
             );
 
@@ -77,8 +86,8 @@ const AddEditProperty = () => {
 
         try {
             const url = isEditMode
-                ? `${process.env.REACT_APP_API_URL}/api/owner/properties/${id}`
-                : `${process.env.REACT_APP_API_URL}/api/owner/properties`;
+                ? `/api/owner/properties/${id}`
+                : '/api/owner/properties';
 
             const method = isEditMode ? 'put' : 'post';
 
@@ -133,19 +142,57 @@ const AddEditProperty = () => {
                     </div>
 
                     <div className="col-12 mb-3">
-                        <label className="form-label">Location *</label>
+                        <label className="form-label">Address *</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            name="address"
+                            value={formData.address}
+                            onChange={handleChange}
+                            placeholder="123 Main St"
+                            required
+                        />
+                    </div>
+
+                    <div className="col-md-4 mb-3">
+                        <label className="form-label">City *</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            name="city"
+                            value={formData.city}
+                            onChange={handleChange}
+                            placeholder="San Jose"
+                            required
+                        />
+                    </div>
+
+                    <div className="col-md-4 mb-3">
+                        <label className="form-label">State *</label>
                         <select
                             className="form-select"
-                            name="location"
-                            value={formData.location}
+                            name="state"
+                            value={formData.state}
                             onChange={handleChange}
                             required
                         >
-                            <option value="">Select a location</option>
-                            {LOCATIONS.map((loc) => (
-                                <option key={loc} value={loc}>{loc}</option>
+                            <option value="">Select State</option>
+                            {usStates.map(state => (
+                                <option key={state} value={state}>{state}</option>
                             ))}
                         </select>
+                    </div>
+
+                    <div className="col-md-4 mb-3">
+                        <label className="form-label">Country *</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            name="country"
+                            value={formData.country}
+                            onChange={handleChange}
+                            required
+                        />
                     </div>
 
                     <div className="col-12 mb-3">
@@ -164,8 +211,8 @@ const AddEditProperty = () => {
                         <input
                             type="number"
                             className="form-control"
-                            name="pricing"
-                            value={formData.pricing}
+                            name="price_per_night"
+                            value={formData.price_per_night}
                             onChange={handleChange}
                             min="0"
                             step="0.01"

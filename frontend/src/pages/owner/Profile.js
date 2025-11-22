@@ -7,7 +7,7 @@ const OwnerProfile = () => {
         email: '',
         phone: '',
         city: '',
-        country: '',
+        state: '',
         about_me: '',
         languages: '',
         gender: '',
@@ -28,7 +28,7 @@ const OwnerProfile = () => {
     const fetchProfile = async () => {
         try {
             const response = await axios.get(
-                `${process.env.REACT_APP_API_URL}/api/owner/profile`,
+                '/api/owner/profile',
                 { withCredentials: true }
             );
 
@@ -70,7 +70,7 @@ const OwnerProfile = () => {
 
         try {
             const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/owner/profile/image`,
+                '/api/owner/profile/image',
                 formData,
                 {
                     headers: { 'Content-Type': 'multipart/form-data' },
@@ -79,10 +79,11 @@ const OwnerProfile = () => {
             );
 
             if (response.data.success) {
-                setProfile({ ...profile, profile_picture: response.data.imageUrl });
                 alert('Profile image updated!');
                 setSelectedImage(null);
                 setImagePreview(null);
+                // Refetch profile to get the updated image
+                await fetchProfile();
             }
         } catch (error) {
             console.error('Upload error:', error);
@@ -94,11 +95,18 @@ const OwnerProfile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Validate phone number (must be exactly 10 digits)
+        if (profile.phone && !/^\d{10}$/.test(profile.phone)) {
+            alert('Phone number must be exactly 10 digits');
+            return;
+        }
+        
         setSaving(true);
 
         try {
             const response = await axios.put(
-                `${process.env.REACT_APP_API_URL}/api/owner/profile`,
+                '/api/owner/profile',
                 profile,
                 { withCredentials: true }
             );
@@ -145,7 +153,7 @@ const OwnerProfile = () => {
                                         />
                                     ) : profile.profile_picture ? (
                                         <img 
-                                            src={`${process.env.REACT_APP_API_URL}${profile.profile_picture}`}
+                                            src={profile.profile_picture}
                                             alt="Profile"
                                             className="rounded-circle"
                                             style={{ width: '150px', height: '150px', objectFit: 'cover', border: '3px solid #6a11cb' }}
@@ -246,15 +254,19 @@ const OwnerProfile = () => {
                                         />
                                     </div>
                                     <div className="col-md-6 mb-3">
-                                        <label className="form-label">Country</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            name="country"
-                                            value={profile.country || ''}
+                                        <label className="form-label">State</label>
+                                        <select
+                                            className="form-select"
+                                            name="state"
+                                            value={profile.state || ''}
                                             onChange={handleChange}
                                             disabled={!editing}
-                                        />
+                                        >
+                                            <option value="">Select State</option>
+                                            {['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'].map(state => (
+                                                <option key={state} value={state}>{state}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className="col-12 mb-3">
                                         <label className="form-label">About Me</label>

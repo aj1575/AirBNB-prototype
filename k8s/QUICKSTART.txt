@@ -1,0 +1,96 @@
+KUBERNETES DEPLOYMENT - QUICK START
+====================================
+
+📋 FILES CREATED:
+-----------------
+✅ secrets.yaml              - All passwords and sensitive data
+✅ configmap.yaml            - Configuration settings
+✅ mysql-deployment.yaml     - MySQL database + PVC + Service
+✅ mongodb-deployment.yaml   - MongoDB database + PVC + Service
+✅ zookeeper-deployment.yaml - Zookeeper for Kafka + Service
+✅ kafka-deployment.yaml     - Kafka message broker + Service
+✅ backend-deployment.yaml   - Backend API (2 replicas) + HPA + Service
+✅ frontend-deployment.yaml  - Frontend React app (2 replicas) + HPA + Service
+✅ ingress.yaml              - Ingress routing configuration
+✅ deploy.sh                 - Automated deployment script
+✅ cleanup.sh                - Cleanup script
+
+🔐 CREDENTIALS (see CREDENTIALS.txt):
+-------------------------------------
+MySQL Password: Lappy1234567890
+MongoDB User: admin / admin123
+Session Secret: cmpe273_airbnb_secret_key_2024
+
+⚙️  INSTALLATION NEEDED:
+------------------------
+1. Enable Kubernetes in Docker Desktop:
+   - Open Docker Desktop → Settings → Kubernetes
+   - Check "Enable Kubernetes"
+   - Click "Apply & Restart"
+   - Wait 2-3 minutes
+
+2. Verify Kubernetes is running:
+   kubectl cluster-info
+
+🚀 DEPLOYMENT STEPS:
+--------------------
+1. Make sure Docker images are built:
+   docker images | grep airbnb-prototype
+   
+   Should see:
+   - airbnb-prototype-backend
+   - airbnb-prototype-frontend
+
+2. Deploy to Kubernetes:
+   cd k8s
+   ./deploy.sh
+
+3. Check deployment status:
+   kubectl get pods
+   kubectl get services
+   kubectl get hpa
+
+4. Access the application:
+   kubectl get service frontend-service
+   
+   Then open: http://localhost (or the LoadBalancer IP)
+
+📊 MONITORING:
+--------------
+View all resources:
+  kubectl get all
+
+View pod logs:
+  kubectl logs <pod-name>
+  kubectl logs -f <pod-name>  (follow logs)
+
+View specific service:
+  kubectl get pods -l app=backend
+  kubectl get pods -l app=frontend
+
+Scale manually:
+  kubectl scale deployment backend-deployment --replicas=5
+
+🔄 AUTO-SCALING:
+----------------
+Backend HPA: 2-10 replicas (CPU 70%, Memory 80%)
+Frontend HPA: 2-5 replicas (CPU 70%)
+
+View HPA status:
+  kubectl get hpa
+
+🗑️  CLEANUP:
+------------
+Remove all resources:
+  cd k8s
+  ./cleanup.sh
+
+Or manually:
+  kubectl delete -f .
+
+📝 NEXT STEPS AFTER DEPLOYMENT:
+-------------------------------
+1. Test the application
+2. Take screenshots for Lab 2 report
+3. Document scaling behavior
+4. Test HPA by generating load

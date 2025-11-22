@@ -141,7 +141,7 @@ function PropertyDetails() {
 
     const propertyImages = property.photos ? property.photos.split(',') : [];
     const firstImage = propertyImages[0];
-    const imageUrl = firstImage ? `${process.env.REACT_APP_API_URL}${firstImage}` : null;
+    const imageUrl = firstImage;
 
     return (
         <div className="container mt-4 mb-5">
@@ -172,7 +172,7 @@ function PropertyDetails() {
                                     {propertyImages.slice(1, 5).map((img, idx) => (
                                         <div key={idx} className="col-3">
                                             <img 
-                                                src={`${process.env.REACT_APP_API_URL}${img}`}
+                                                src={img}
                                                 alt={`${property.name} ${idx + 2}`}
                                                 className="w-100 rounded"
                                                 style={{ height: '100px', objectFit: 'cover' }}
