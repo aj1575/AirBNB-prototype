@@ -193,7 +193,7 @@ function TravelerProfile() {
                                         />
                                     ) : formData.profile_image ? (
                                         <img 
-                                            src={formData.profile_image}
+                                            src={`${process.env.REACT_APP_API_URL}${formData.profile_image}`}
                                             alt="Profile"
                                             className="rounded-circle"
                                             style={{ width: '150px', height: '150px', objectFit: 'cover', border: '3px solid #6a11cb' }}

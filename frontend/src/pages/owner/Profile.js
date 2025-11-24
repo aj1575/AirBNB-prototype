@@ -153,7 +153,7 @@ const OwnerProfile = () => {
                                         />
                                     ) : profile.profile_picture ? (
                                         <img 
-                                            src={profile.profile_picture}
+                                            src={`${process.env.REACT_APP_API_URL}${profile.profile_picture}`}
                                             alt="Profile"
                                             className="rounded-circle"
                                             style={{ width: '150px', height: '150px', objectFit: 'cover', border: '3px solid #6a11cb' }}
