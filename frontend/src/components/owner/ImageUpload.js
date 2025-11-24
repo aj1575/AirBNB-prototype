@@ -28,8 +28,9 @@ const ImageUpload = ({ propertyId, existingImages = [], onUploadSuccess }) => {
         setUploading(true);
 
         try {
+            const API_URL = process.env.REACT_APP_API_URL || '';
             const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/owner/properties/${propertyId}/images`,
+                `${API_URL}/api/owner/properties/${propertyId}/images`,
                 formData,
                 {
                     headers: { 'Content-Type': 'multipart/form-data' },
@@ -59,8 +60,9 @@ const ImageUpload = ({ propertyId, existingImages = [], onUploadSuccess }) => {
         if (!window.confirm('Delete this image?')) return;
 
         try {
+            const API_URL = process.env.REACT_APP_API_URL || '';
             const response = await axios.delete(
-                `${process.env.REACT_APP_API_URL}/api/owner/properties/${propertyId}/images`,
+                `${API_URL}/api/owner/properties/${propertyId}/images`,
                 {
                     data: { imageUrl },
                     withCredentials: true

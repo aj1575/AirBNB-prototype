@@ -67,16 +67,24 @@ const handleBookingStatusUpdated = async (data) => {
     console.log('🔄 Processing booking status update:', data);
     
     try {
-        // Get traveler details
+        // Update booking status in database
+        await db.query(
+            'UPDATE bookings SET status = ? WHERE id = ?',
+            [data.status, data.bookingId]
+        );
+        
+        console.log(`✅ Booking ${data.bookingId} status updated to: ${data.status} in database`);
+        
+        // Get traveler details for notification
         const [bookings] = await db.query(
             'SELECT traveler_id FROM bookings WHERE id = ?',
             [data.bookingId]
         );
         
         if (bookings.length > 0) {
-            console.log(`✅ Booking ${data.bookingId} status updated to: ${data.status}`);
             console.log(`📧 Notify traveler ${bookings[0].traveler_id} about status change`);
             // Here you could send email/notification to traveler
+            // Example: sendEmail(bookings[0].traveler_id, 'Booking Status Update', data);
         }
     } catch (error) {
         console.error('Error in handleBookingStatusUpdated:', error);
@@ -88,9 +96,26 @@ const handleBookingCancelled = async (data) => {
     console.log('❌ Processing booking cancellation:', data);
     
     try {
-        console.log(`✅ Booking ${data.bookingId} cancelled`);
-        console.log(`📧 Notify relevant parties about cancellation`);
-        // Here you could send email/notification
+        // Update booking status in database
+        await db.query(
+            'UPDATE bookings SET status = ? WHERE id = ?',
+            ['cancelled', data.bookingId]
+        );
+        
+        console.log(`✅ Booking ${data.bookingId} cancelled in database`);
+        
+        // Get booking details for notifications
+        const [bookings] = await db.query(
+            'SELECT traveler_id, property_id FROM bookings WHERE id = ?',
+            [data.bookingId]
+        );
+        
+        if (bookings.length > 0) {
+            console.log(`📧 Notify traveler ${bookings[0].traveler_id} and owner about cancellation`);
+            console.log(`   Cancelled by: ${data.cancelledBy || 'unknown'}`);
+            // Here you could send email/notification to both parties
+            // Example: sendCancellationEmail(bookings[0].traveler_id, data);
+        }
     } catch (error) {
         console.error('Error in handleBookingCancelled:', error);
     }

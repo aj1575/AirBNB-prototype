@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { publishMessage, TOPICS } = require('../kafka/kafkaConfig');
 
 // ========== MULTER CONFIG ==========
 
@@ -252,26 +253,33 @@ const uploadProfileImage = async (req, res) => {
 const createProperty = async (req, res) => {
     try {
         const ownerId = req.session.userId;
-        const { name, type, location, description, pricing, bedrooms, bathrooms, amenities, max_guests } = req.body;
+        const { 
+            name, type, address, city, state, country, description, 
+            price_per_night, bedrooms, bathrooms, amenities, max_guests 
+        } = req.body;
 
-        if (!name || !type || !location || !pricing || !bedrooms || !bathrooms) {
+        // Validate required fields
+        if (!name || !type || !address || !city || !state || !price_per_night || !bedrooms || !bathrooms) {
             return res.status(400).json({ 
                 success: false, 
                 message: 'Please provide all required fields' 
             });
         }
 
+        // Combine location fields
+        const location = `${city}, ${state}`;
+
         const query = `
             INSERT INTO properties 
-            (owner_id, name, type, location, description, pricing, bedrooms, bathrooms, amenities, max_guests, available)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true)
+            (owner_id, name, type, address, city, state, country, location, description, pricing, bedrooms, bathrooms, amenities, max_guests, available)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true)
         `;
 
-        const amenitiesStr = Array.isArray(amenities) ? amenities.join(',') : amenities;
+        const amenitiesStr = Array.isArray(amenities) ? amenities.join(',') : (amenities || '');
         
         const [result] = await pool.execute(query, [
-            ownerId, name, type, location, description, pricing, 
-            bedrooms, bathrooms, amenitiesStr, max_guests || 1
+            ownerId, name, type, address, city, state, country || 'USA', location, 
+            description, price_per_night, bedrooms, bathrooms, amenitiesStr, max_guests || 1
         ]);
 
         res.status(201).json({
@@ -606,10 +614,20 @@ const acceptBooking = async (req, res) => {
             });
         }
 
-        await pool.execute(
-            'UPDATE bookings SET status = "accepted" WHERE id = ?',
-            [id]
-        );
+        // Publish event to Kafka instead of direct DB update
+        const eventData = {
+            bookingId: parseInt(id),
+            propertyId: booking[0].property_id,
+            travelerId: booking[0].traveler_id,
+            ownerId: ownerId,
+            status: 'accepted',
+            action: 'accept',
+            timestamp: new Date().toISOString()
+        };
+
+        // Publish to Kafka
+        await publishMessage(TOPICS.BOOKING_STATUS_UPDATED, eventData);
+        console.log('📤 Published booking acceptance to Kafka:', eventData);
 
         res.json({
             success: true,
@@ -650,10 +668,21 @@ const cancelBooking = async (req, res) => {
             });
         }
 
-        await pool.execute(
-            'UPDATE bookings SET status = "cancelled" WHERE id = ?',
-            [id]
-        );
+        // Publish event to Kafka instead of direct DB update
+        const eventData = {
+            bookingId: parseInt(id),
+            propertyId: booking[0].property_id,
+            travelerId: booking[0].traveler_id,
+            ownerId: ownerId,
+            status: 'cancelled',
+            action: 'cancel',
+            cancelledBy: 'owner',
+            timestamp: new Date().toISOString()
+        };
+
+        // Publish to Kafka
+        await publishMessage(TOPICS.BOOKING_CANCELLED, eventData);
+        console.log('📤 Published booking cancellation to Kafka:', eventData);
 
         res.json({
             success: true,

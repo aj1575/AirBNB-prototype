@@ -271,15 +271,15 @@ function PropertyDetails() {
                                 </div>
 
                                 <div className="mb-3">
-                                    <label className="form-label">Number of Guests</label>
+                                    <label className="form-label">Number of Guests (Max: {property.max_guests})</label>
                                     <select
                                         className="form-select"
                                         name="guests"
                                         value={bookingData.guests}
                                         onChange={handleBookingChange}
                                     >
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                                            <option key={num} value={num}>{num}</option>
+                                        {Array.from({ length: property.max_guests }, (_, i) => i + 1).map(num => (
+                                            <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
                                         ))}
                                     </select>
                                 </div>
