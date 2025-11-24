@@ -9,6 +9,10 @@ const Navbar = () => {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
     
+    // Also check localStorage for user
+    const localUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
+    const currentUser = user || localUser;
+    
     const isOwnerPage = location.pathname.startsWith('/owner');
     const isHomePage = location.pathname === '/';
     const isLoginOrSignupPage = location.pathname.includes('/login') || location.pathname.includes('/signup');
@@ -68,17 +72,14 @@ const Navbar = () => {
                     Airbnb Prototype
                 </Link>
 
-                {/* Right side menu - Profile tab and Become a Host */}
+                {/* Right side menu - Profile and Logout */}
                 <div className="d-flex align-items-center gap-3">
                     {!isLoginOrSignupPage && (
                         <>
                             <Link to="/traveler/profile" className="text-white text-decoration-none">
                                 Profile
                             </Link>
-                            <Link to="/owner/login" className="btn btn-light text-dark rounded-pill px-4">
-                                Become a host
-                            </Link>
-                            {user && (
+                            {currentUser && (
                                 <button 
                                     onClick={handleLogout}
                                     className="btn btn-outline-light rounded-pill px-4"
@@ -97,10 +98,10 @@ const Navbar = () => {
                         <div className="dropdown">
                             <button className="btn btn-light rounded-pill px-3 d-flex align-items-center gap-2" data-bs-toggle="dropdown">
                                 <i className="bi bi-person-circle"></i>
-                                {user && <span className="small">{user.name}</span>}
+                                {currentUser && <span className="small">{currentUser.name}</span>}
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end">
-                                {user && <li><h6 className="dropdown-header">Hello, {user.name}!</h6></li>}
+                                {currentUser && <li><h6 className="dropdown-header">Hello, {currentUser.name}!</h6></li>}
                                 <li><Link className="dropdown-item" to="/traveler/profile"><i className="bi bi-person me-2"></i>Profile</Link></li>
                                 <li><Link className="dropdown-item" to="/traveler/bookings"><i className="bi bi-calendar-check me-2"></i>My bookings</Link></li>
                                 <li><hr className="dropdown-divider"/></li>
