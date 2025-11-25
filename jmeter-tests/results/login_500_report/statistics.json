@@ -1,0 +1,34 @@
+{
+  "POST /api/owner/login" : {
+    "transaction" : "POST /api/owner/login",
+    "sampleCount" : 5000,
+    "errorCount" : 1,
+    "errorPct" : 0.02,
+    "meanResTime" : 7020.4107999999815,
+    "medianResTime" : 7838.0,
+    "minResTime" : 116.0,
+    "maxResTime" : 14843.0,
+    "pct1ResTime" : 8589.0,
+    "pct2ResTime" : 8641.0,
+    "pct3ResTime" : 8709.0,
+    "throughput" : 59.769290538521304,
+    "receivedKBytesPerSec" : 33.771061670701094,
+    "sentKBytesPerSec" : 14.300269708923555
+  },
+  "Total" : {
+    "transaction" : "Total",
+    "sampleCount" : 5000,
+    "errorCount" : 1,
+    "errorPct" : 0.02,
+    "meanResTime" : 7020.4107999999815,
+    "medianResTime" : 7838.0,
+    "minResTime" : 116.0,
+    "maxResTime" : 14843.0,
+    "pct1ResTime" : 8589.0,
+    "pct2ResTime" : 8641.0,
+    "pct3ResTime" : 8709.0,
+    "throughput" : 59.769290538521304,
+    "receivedKBytesPerSec" : 33.771061670701094,
+    "sentKBytesPerSec" : 14.300269708923555
+  }
+}

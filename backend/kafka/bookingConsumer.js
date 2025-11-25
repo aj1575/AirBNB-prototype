@@ -1,5 +1,6 @@
 const { consumer, TOPICS } = require('./kafkaConfig');
 const db = require('../models/db');
+const notificationService = require('../services/notificationService');
 
 // Start consuming messages
 const startBookingConsumer = async () => {
@@ -53,9 +54,24 @@ const handleBookingCreated = async (data) => {
         );
         
         if (properties.length > 0) {
+            const ownerId = properties[0].owner_id;
             console.log(`✅ Booking ${data.bookingId} created for property ${data.propertyId}`);
-            console.log(`📧 Notify owner ${properties[0].owner_id} about new booking request`);
-            // Here you could send email/notification to owner
+            console.log(`📧 Notify owner ${ownerId} about new booking request`);
+            
+            // Send real-time notification to owner
+            notificationService.addNotification(ownerId, {
+                type: 'NEW_BOOKING',
+                title: '🎉 New Booking Request!',
+                message: `You have a new booking request for your property`,
+                bookingId: data.bookingId,
+                propertyId: data.propertyId,
+                propertyName: data.propertyName,
+                travelerName: data.travelerName,
+                checkIn: data.checkIn,
+                checkOut: data.checkOut,
+                totalPrice: data.totalPrice,
+                action: 'review'
+            });
         }
     } catch (error) {
         console.error('Error in handleBookingCreated:', error);

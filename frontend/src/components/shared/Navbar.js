@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../../redux/slices/authSlice';
+import NotificationBell from '../owner/NotificationBell';
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -43,6 +44,7 @@ const Navbar = () => {
                                 <Link className="nav-link text-white" to="/owner/dashboard">Dashboard</Link>
                                 <Link className="nav-link text-white" to="/owner/bookings">Bookings</Link>
                                 <Link className="nav-link text-white" to="/owner/profile">Profile</Link>
+                                <NotificationBell />
                                 <Link to="/traveler/login" className="btn btn-light text-dark btn-sm">
                                     Become a Traveler
                                 </Link>

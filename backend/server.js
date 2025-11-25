@@ -108,6 +108,15 @@ try {
     console.log('⚠️  Traveler routes not found - will be available when implemented');
 }
 
+// API Routes - NOTIFICATIONS (Real-time alerts via Kafka)
+try {
+    const notificationRoutes = require('./routes/notificationRoutes');
+    app.use('/api/notifications', notificationRoutes);
+    console.log('✅ Notification routes loaded successfully');
+} catch (error) {
+    console.log('⚠️  Notification routes not found');
+}
+
 // 404 Handler - Route Not Found
 app.use((req, res, next) => {
     res.status(404).json({
